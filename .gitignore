@@ -1,0 +1,17 @@
+node_modules
+dist
+build
+.turbo
+*.db
+.env
+
+*.log
+cmd
+planing
+docs
+*.tsbuildinfo
+__tests__
+.vscode
+.kiro
+auditoria-seguridad
+CONTINUACION-FASE-5.md
