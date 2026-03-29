@@ -40,23 +40,93 @@ export function App() {
   ]);
 
   useInput((inputChar, key) => {
+    // Handle command menu navigation
+    if (modalType === 'commands') {
+      if (key.escape) {
+        setModalType('none');
+        setInput('');
+        return;
+      }
+
+      if (key.upArrow) {
+        setCommandSelectedIndex(prev => Math.max(0, prev - 1));
+        return;
+      }
+
+      if (key.downArrow) {
+        // Get filtered commands count
+        const COMMANDS = [
+          '/agents',
+          '/connect',
+          '/editor',
+          '/exit',
+          '/help',
+          '/init',
+          '/mcps',
+          '/models',
+          '/new',
+          '/review',
+        ];
+        const filter = input.substring(1);
+        const filteredCommands = COMMANDS.filter(cmd =>
+          cmd.toLowerCase().includes(filter.toLowerCase())
+        );
+        setCommandSelectedIndex(prev => Math.min(filteredCommands.length - 1, prev + 1));
+        return;
+      }
+
+      if (key.return) {
+        // Execute selected command
+        const COMMANDS = [
+          '/agents',
+          '/connect',
+          '/editor',
+          '/exit',
+          '/help',
+          '/init',
+          '/mcps',
+          '/models',
+          '/new',
+          '/review',
+        ];
+        const filter = input.substring(1);
+        const filteredCommands = COMMANDS.filter(cmd =>
+          cmd.toLowerCase().includes(filter.toLowerCase())
+        );
+
+        if (filteredCommands.length > 0) {
+          const selectedCommand = filteredCommands[commandSelectedIndex];
+          setInput(selectedCommand);
+          setModalType('none');
+          // Execute the command
+          handleSubmit(selectedCommand);
+        }
+        return;
+      }
+      return;
+    }
+
+    // Handle other modals
+    if (modalType === 'models' || modalType === 'sessions') {
+      if (key.escape) {
+        setModalType('none');
+      }
+      return;
+    }
+
     // Global shortcuts
     if (key.ctrl && inputChar === 'p') {
-      setModalType(modalType === 'commands' ? 'none' : 'commands');
+      if (modalType === 'none') {
+        setModalType('commands');
+      } else {
+        setModalType('none');
+      }
       return;
     }
 
     if (key.tab) {
       // Toggle mode between plan and build
       setMode(mode === 'plan' ? 'build' : 'plan');
-      return;
-    }
-
-    // Handle modals
-    if (modalType !== 'none') {
-      if (key.escape) {
-        setModalType('none');
-      }
       return;
     }
   });
@@ -67,6 +137,7 @@ export function App() {
     // Show command menu when typing /
     if (value.startsWith('/') && value.length > 0) {
       setModalType('commands');
+      setCommandSelectedIndex(0); // Reset selection when filter changes
     } else if (modalType === 'commands') {
       setModalType('none');
     }
