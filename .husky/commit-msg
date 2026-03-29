@@ -1,1 +1,58 @@
-npx --no-install commitlint --edit "$1"
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Define color codes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+RESET='\033[0m'
+
+# Define emoji codes
+CHECK_MARK='✅'
+CROSS='❌'
+WARNING='⚠️'
+
+echo ""
+echo -e "${BLUE}→ Validating commit message...${RESET}"
+
+# Check for non-English characters (Spanish accents, etc.)
+if echo "$COMMIT_MSG" | grep -qP '[áéíóúñäëïöüÁÉÍÓÚÑÄËÏÖÜàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛãõÃÕçÇ¿¡]'; then
+  echo ""
+  echo -e "${RED}${CROSS} Error: Commit message must be in English only${RESET}"
+  echo -e "${YELLOW}   Found non-English characters in the commit message${RESET}"
+  echo -e "${YELLOW}   Please rewrite your commit message in English${RESET}"
+  echo ""
+  exit 1
+fi
+
+# Check spelling with cspell
+echo -e "${BLUE}→ Checking spelling...${RESET}"
+if ! echo "$COMMIT_MSG" | npx --no-install cspell stdin --no-progress --no-summary --config cspell.config.json; then
+  echo ""
+  echo -e "${RED}${CROSS} Error: Spelling errors found in commit message${RESET}"
+  echo -e "${YELLOW}   Please fix the spelling or add technical terms to cspell.config.json${RESET}"
+  echo ""
+  exit 1
+fi
+
+# Run commitlint to validate conventional commit format
+echo -e "${BLUE}→ Validating commit format...${RESET}"
+if npx --no-install commitlint --edit "$1"; then
+  echo ""
+  echo -e "${GREEN}${CHECK_MARK} Commit message is valid!${RESET}"
+  echo ""
+else
+  echo ""
+  echo -e "${RED}${CROSS} Commit message format is invalid${RESET}"
+  echo -e "${YELLOW}   Please follow the Conventional Commits format:${RESET}"
+  echo -e "${YELLOW}   <type>(<scope>): <subject>${RESET}"
+  echo ""
+  echo -e "${YELLOW}   Types: feat, fix, docs, style, refactor, perf, test, chore${RESET}"
+  echo -e "${YELLOW}   Example: feat(tui): add new color theme${RESET}"
+  echo ""
+  exit 1
+fi

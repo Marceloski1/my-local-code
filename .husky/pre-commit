@@ -1,8 +1,75 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Format code with Prettier
-pnpm format
+# Define color codes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+RESET='\033[0m'
 
-# Run lint on staged files
-pnpm lint
+# Define emoji codes
+CHECK_MARK='✅'
+WARNING='⚠️'
+ROCKET='🚀'
+CROSS='❌'
+
+# Print header
+echo ""
+echo -e "${YELLOW}${ROCKET} Pre-commit checks starting...${RESET}"
+echo ""
+
+# Format code with Prettier
+echo -e "${BLUE}→ Formatting code with Prettier...${RESET}"
+if pnpm format; then
+  echo -e "${GREEN}${CHECK_MARK} Code formatted successfully${RESET}"
+else
+  echo -e "${RED}${CROSS} Formatting failed${RESET}"
+  exit 1
+fi
+echo ""
+
+# Run typecheck
+echo -e "${BLUE}→ Running TypeScript type checking...${RESET}"
+if pnpm typecheck; then
+  echo -e "${GREEN}${CHECK_MARK} Type checking passed${RESET}"
+else
+  echo -e "${RED}${CROSS} Type checking failed${RESET}"
+  exit 1
+fi
+echo ""
+
+# Run lint
+echo -e "${BLUE}→ Running ESLint...${RESET}"
+if pnpm lint; then
+  echo -e "${GREEN}${CHECK_MARK} Linting passed${RESET}"
+else
+  echo -e "${YELLOW}${WARNING} Linting failed - attempting auto-fix...${RESET}"
+  if pnpm lint:fix; then
+    echo -e "${GREEN}${CHECK_MARK} Auto-fix successful${RESET}"
+  else
+    echo -e "${RED}${CROSS} Linting failed - please fix errors manually${RESET}"
+    exit 1
+  fi
+fi
+echo ""
+
+# Run spell check
+echo -e "${BLUE}→ Running spell check...${RESET}"
+if pnpm spell-check; then
+  echo -e "${GREEN}${CHECK_MARK} Spell check passed${RESET}"
+else
+  echo -e "${YELLOW}${WARNING} Spell check found issues${RESET}"
+  echo -e "${YELLOW}   Add technical terms to cspell.config.json if needed${RESET}"
+  # Don't fail on spell check, just warn
+fi
+echo ""
+
+# Add formatted files back to staging
+echo -e "${BLUE}→ Adding formatted files to staging...${RESET}"
+git add .
+echo -e "${GREEN}${CHECK_MARK} Files staged${RESET}"
+echo ""
+
+echo -e "${GREEN}${CHECK_MARK} Pre-commit checks completed successfully!${RESET}"
+echo ""
