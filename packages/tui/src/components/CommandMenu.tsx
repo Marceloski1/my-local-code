@@ -18,6 +18,7 @@ const COMMANDS: Command[] = [
   { name: '/models', description: 'Switch model' },
   { name: '/new', description: 'New session' },
   { name: '/review', description: 'review changes [commit|branch|pr], defaults to uncommitted' },
+  { name: '/sessions', description: 'Manage sessions' },
 ];
 
 interface CommandMenuProps {

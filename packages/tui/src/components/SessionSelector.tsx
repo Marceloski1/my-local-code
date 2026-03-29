@@ -18,6 +18,54 @@ interface SessionSelectorProps {
   onClose: () => void;
 }
 
+function groupSessionsByDate(sessions: Session[]) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const groups: { [key: string]: Session[] } = {
+    Today: [],
+    Yesterday: [],
+    'This Week': [],
+    'This Month': [],
+    Older: [],
+  };
+
+  sessions.forEach(session => {
+    const sessionDate = new Date(session.updatedAt);
+    const sessionDay = new Date(
+      sessionDate.getFullYear(),
+      sessionDate.getMonth(),
+      sessionDate.getDate()
+    );
+
+    if (sessionDay.getTime() === today.getTime()) {
+      groups.Today.push(session);
+    } else if (sessionDay.getTime() === yesterday.getTime()) {
+      groups.Yesterday.push(session);
+    } else if (sessionDay.getTime() >= today.getTime() - 7 * 24 * 60 * 60 * 1000) {
+      groups['This Week'].push(session);
+    } else if (
+      sessionDate.getMonth() === now.getMonth() &&
+      sessionDate.getFullYear() === now.getFullYear()
+    ) {
+      groups['This Month'].push(session);
+    } else {
+      groups.Older.push(session);
+    }
+  });
+
+  return groups;
+}
+
+function formatTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
 export function SessionSelector({
   sessions,
   activeSessionId,
@@ -33,6 +81,14 @@ export function SessionSelector({
   const filteredSessions = sessions.filter(session =>
     session.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const groupedSessions = groupSessionsByDate(filteredSessions);
+
+  // Flatten sessions for navigation
+  const flatSessions: Session[] = [];
+  Object.entries(groupedSessions).forEach(([_, groupSessions]) => {
+    flatSessions.push(...groupSessions);
+  });
 
   useInput((input, key) => {
     if (key.escape) {
@@ -55,13 +111,17 @@ export function SessionSelector({
         setSelectedIndex(prev => Math.max(0, prev - 1));
       }
     } else if (key.downArrow) {
-      setSelectedIndex(prev => Math.min(filteredSessions.length - 1, prev + 1));
-    } else if (key.return && filteredSessions.length > 0) {
-      onSelect(filteredSessions[selectedIndex].id);
+      setSelectedIndex(prev => Math.min(flatSessions.length - 1, prev + 1));
+    } else if (key.return && flatSessions.length > 0) {
+      onSelect(flatSessions[selectedIndex].id);
       onClose();
-    } else if (key.ctrl && input === 'd' && filteredSessions.length > 0) {
-      onDelete(filteredSessions[selectedIndex].id);
-    } else if (key.ctrl && input === 'r' && filteredSessions.length > 0) {
+    } else if (key.ctrl && input === 'd' && flatSessions.length > 0) {
+      onDelete(flatSessions[selectedIndex].id);
+      // Adjust selected index if needed
+      if (selectedIndex >= flatSessions.length - 1) {
+        setSelectedIndex(Math.max(0, flatSessions.length - 2));
+      }
+    } else if (key.ctrl && input === 'r' && flatSessions.length > 0) {
       // TODO: Implement rename functionality
       // For now, just close
       onClose();
@@ -94,24 +154,37 @@ export function SessionSelector({
         </Box>
       </Box>
 
-      {filteredSessions.length === 0 ? (
+      {flatSessions.length === 0 ? (
         <Box marginY={2}>
           <Text color={INK_COLORS.textSecondary}>No results found</Text>
         </Box>
       ) : (
         <Box flexDirection="column" marginBottom={1}>
-          {filteredSessions.map((session, index) => {
-            const isSelected = !isSearchFocused && index === selectedIndex;
-            const isActive = session.id === activeSessionId;
+          {Object.entries(groupedSessions).map(([groupName, groupSessions]) => {
+            if (groupSessions.length === 0) return null;
+
             return (
-              <Box key={session.id}>
-                <Text
-                  color={isSelected ? INK_COLORS.active : INK_COLORS.text}
-                  backgroundColor={isSelected ? INK_COLORS.surface : undefined}
-                >
-                  {isActive ? '● ' : '  '}
-                  {session.title}
+              <Box key={groupName} flexDirection="column" marginBottom={1}>
+                <Text color={INK_COLORS.secondary} bold>
+                  {groupName}
                 </Text>
+                {groupSessions.map(session => {
+                  const flatIndex = flatSessions.findIndex(s => s.id === session.id);
+                  const isSelected = !isSearchFocused && flatIndex === selectedIndex;
+                  const isActive = session.id === activeSessionId;
+                  return (
+                    <Box key={session.id} justifyContent="space-between">
+                      <Text
+                        color={isSelected ? INK_COLORS.active : INK_COLORS.text}
+                        backgroundColor={isSelected ? INK_COLORS.surface : undefined}
+                      >
+                        {isActive ? '● ' : '  '}
+                        {session.title}
+                      </Text>
+                      <Text color={INK_COLORS.textSecondary}>{formatTime(session.updatedAt)}</Text>
+                    </Box>
+                  );
+                })}
               </Box>
             );
           })}

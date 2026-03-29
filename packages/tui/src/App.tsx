@@ -22,6 +22,10 @@ export function App() {
   const [input, setInput] = useState('');
   const [modalType, setModalType] = useState<ModalType>('none');
   const [commandSelectedIndex, setCommandSelectedIndex] = useState(0);
+  const [sessions, setSessions] = useState<Array<{ id: string; title: string; updatedAt: string }>>(
+    []
+  );
+  const [loadingSessions, setLoadingSessions] = useState(false);
 
   const activeSessionId = useAppStore(state => state.activeSessionId);
   const setActiveSessionId = useAppStore(state => state.setSession);
@@ -33,11 +37,18 @@ export function App() {
     useChat(activeSessionId);
   const { models, selectModel } = useModels();
 
-  // Mock data for now
-  const [sessions] = useState([
-    { id: '1', title: 'Session 1', updatedAt: new Date().toISOString() },
-    { id: '2', title: 'Session 2', updatedAt: new Date().toISOString() },
-  ]);
+  // Load sessions when opening sessions modal
+  const loadSessions = async () => {
+    setLoadingSessions(true);
+    try {
+      const list = await client.listSessions();
+      setSessions(list);
+    } catch (e) {
+      console.error('Failed to load sessions:', e);
+    } finally {
+      setLoadingSessions(false);
+    }
+  };
 
   useInput((inputChar, key) => {
     // Handle command menu navigation
@@ -66,6 +77,7 @@ export function App() {
           '/models',
           '/new',
           '/review',
+          '/sessions',
         ];
         const filter = input.substring(1);
         const filteredCommands = COMMANDS.filter(cmd =>
@@ -88,6 +100,7 @@ export function App() {
           '/models',
           '/new',
           '/review',
+          '/sessions',
         ];
         const filter = input.substring(1);
         const filteredCommands = COMMANDS.filter(cmd =>
@@ -153,6 +166,13 @@ export function App() {
       if (command === '/models') {
         setModalType('models');
         setInput('');
+        return;
+      }
+
+      if (command === '/sessions') {
+        setInput('');
+        await loadSessions();
+        setModalType('sessions');
         return;
       }
 
@@ -222,6 +242,8 @@ export function App() {
       if (activeSessionId === sessionId) {
         setActiveSessionId(null);
       }
+      // Reload sessions after delete
+      await loadSessions();
     } catch (e) {
       console.error('Failed to delete session:', e);
     }
