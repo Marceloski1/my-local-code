@@ -91,11 +91,18 @@ app.post('/:id/messages', zValidator('json', sendMessageSchema), async c => {
 
   await db.insert(messages).values(userMessage);
 
-  // Update session updated_at
-  await db
-    .update(sessions)
-    .set({ updatedAt: new Date().toISOString() })
-    .where(eq(sessions.id, sessionId));
+  // Update session updated_at and title if this is the first message
+  const updateData: { updatedAt: string; title?: string } = {
+    updatedAt: new Date().toISOString(),
+  };
+
+  // If this is the first user message, generate a title
+  if (history.length === 0) {
+    const { generateSessionTitle } = await import('../lib/session-title.js');
+    updateData.title = generateSessionTitle(content);
+  }
+
+  await db.update(sessions).set(updateData).where(eq(sessions.id, sessionId));
 
   // Stream agent response
   return streamSSE(c, async stream => {

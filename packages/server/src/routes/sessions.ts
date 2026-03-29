@@ -30,9 +30,21 @@ app.post('/', zValidator('json', createSessionSchema), async c => {
   const db = getDb();
 
   const now = new Date().toISOString();
+
+  // Generate a default title with timestamp if no title provided
+  const defaultTitle =
+    title ||
+    `New Chat ${new Date().toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })}`;
+
   const session = {
     id: nanoid(),
-    title: title || 'Nueva conversación',
+    title: defaultTitle,
     createdAt: now,
     updatedAt: now,
   };
