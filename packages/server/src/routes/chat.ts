@@ -46,11 +46,17 @@ app.post('/:id/messages', zValidator('json', sendMessageSchema), async c => {
 
   const activeModel = configResult[0].value;
 
+  // Get active provider from config
+  const providerResult = await db.select().from(config).where(eq(config.key, 'provider')).limit(1);
+  const providerType = (providerResult.length > 0 ? providerResult[0].value : 'ollama') as
+    | 'ollama'
+    | 'lmstudio';
+
   // Create AI provider
   const { createAIProvider } = await import('../ai/provider.js');
   const provider = createAIProvider({
-    type: 'ollama',
-    baseURL: 'http://localhost:11434/v1',
+    type: providerType,
+    baseURL: providerType === 'lmstudio' ? 'http://localhost:1234/v1' : 'http://localhost:11434/v1',
   });
   const model = provider(activeModel);
 

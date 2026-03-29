@@ -154,4 +154,32 @@ export class AgentClient {
     if (!res.ok) throw new Error(`Server error: ${res.statusText}`);
     return await res.json();
   }
+
+  // Provider
+  async getProvider(): Promise<'ollama' | 'lmstudio'> {
+    const res = await fetch(`${this.baseUrl}/api/models/provider`);
+    if (!res.ok) throw new Error(`Server error: ${res.statusText}`);
+    const data = await res.json();
+    return data.provider;
+  }
+
+  async setProvider(provider: 'ollama' | 'lmstudio'): Promise<void> {
+    const res = await fetch(`${this.baseUrl}/api/models/provider`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider }),
+    });
+    if (!res.ok) throw new Error(`Server error: ${res.statusText}`);
+  }
+
+  async getProviderStatus(): Promise<{
+    provider: 'ollama' | 'lmstudio';
+    running: boolean;
+    url: string;
+    error?: string;
+  }> {
+    const res = await fetch(`${this.baseUrl}/api/models/provider/status`);
+    if (!res.ok) throw new Error(`Server error: ${res.statusText}`);
+    return await res.json();
+  }
 }

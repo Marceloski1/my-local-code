@@ -1,4 +1,5 @@
 import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
 export interface AIProviderConfig {
   type: 'ollama' | 'lmstudio' | 'openai';
@@ -7,8 +8,18 @@ export interface AIProviderConfig {
 }
 
 export function createAIProvider(config: AIProviderConfig) {
+  // LM Studio uses OpenAI-compatible API
+  if (config.type === 'lmstudio') {
+    return createOpenAICompatible({
+      name: 'lmstudio',
+      baseURL: config.baseURL,
+      apiKey: config.apiKey ?? 'lm-studio', // dummy key for local provider
+    });
+  }
+
+  // Ollama and OpenAI use the standard OpenAI SDK
   return createOpenAI({
     baseURL: config.baseURL,
-    apiKey: config.apiKey ?? 'ollama', // dummy key for local providers
+    apiKey: config.apiKey ?? (config.type === 'ollama' ? 'ollama' : undefined),
   });
 }
