@@ -7,6 +7,7 @@ import { StatusBar } from './components/StatusBar.js';
 import { CommandMenu } from './components/CommandMenu.js';
 import { ModelSelector } from './components/ModelSelector.js';
 import { SessionSelector } from './components/SessionSelector.js';
+import { ProviderSelector } from './components/ProviderSelector.js';
 import { MessageBubble } from './components/MessageBubble.js';
 import { ToolCall } from './components/ToolCall.js';
 import { useChat } from './hooks/useChat.js';
@@ -16,7 +17,7 @@ import { AgentClient } from '@agent/sdk';
 
 const client = new AgentClient();
 
-type ModalType = 'none' | 'commands' | 'models' | 'sessions';
+type ModalType = 'none' | 'commands' | 'models' | 'sessions' | 'provider';
 
 export function App() {
   const [input, setInput] = useState('');
@@ -26,6 +27,7 @@ export function App() {
     []
   );
   const [loadingSessions, setLoadingSessions] = useState(false);
+  const [currentProvider, setCurrentProvider] = useState<'ollama' | 'lmstudio'>('ollama');
 
   const activeSessionId = useAppStore(state => state.activeSessionId);
   const setActiveSessionId = useAppStore(state => state.setSession);
@@ -35,7 +37,15 @@ export function App() {
 
   const { messages, loading, isStreaming, currentAssistantMessage, sendMessage } =
     useChat(activeSessionId);
-  const { models, selectModel } = useModels();
+  const { models, selectModel, fetchModels } = useModels();
+
+  // Load current provider on mount
+  React.useEffect(() => {
+    client
+      .getProvider()
+      .then(provider => setCurrentProvider(provider))
+      .catch(e => console.error('Failed to get provider:', e));
+  }, []);
 
   // Load sessions when opening sessions modal
   const loadSessions = async () => {
@@ -120,7 +130,7 @@ export function App() {
     }
 
     // Handle other modals
-    if (modalType === 'models' || modalType === 'sessions') {
+    if (modalType === 'models' || modalType === 'sessions' || modalType === 'provider') {
       if (key.escape) {
         setModalType('none');
       }
@@ -165,6 +175,12 @@ export function App() {
 
       if (command === '/models') {
         setModalType('models');
+        setInput('');
+        return;
+      }
+
+      if (command === '/connect') {
+        setModalType('provider');
         setInput('');
         return;
       }
@@ -229,6 +245,18 @@ export function App() {
   const handleModelSelect = (modelName: string) => {
     selectModel(modelName);
     setModalType('none');
+  };
+
+  const handleProviderSelect = async (provider: 'ollama' | 'lmstudio') => {
+    try {
+      await client.setProvider(provider);
+      setCurrentProvider(provider);
+      // Reload models after changing provider
+      await fetchModels();
+      setModalType('none');
+    } catch (e) {
+      console.error('Failed to set provider:', e);
+    }
   };
 
   const handleSessionSelect = (sessionId: string) => {
@@ -309,6 +337,16 @@ export function App() {
               models={models.map(m => ({ name: m.name, provider: 'Ollama', pricing: 'Free' }))}
               selectedModel={activeModel || undefined}
               onSelect={handleModelSelect}
+              onClose={() => setModalType('none')}
+            />
+          </Box>
+        )}
+
+        {modalType === 'provider' && (
+          <Box marginTop={1} marginBottom={1}>
+            <ProviderSelector
+              currentProvider={currentProvider}
+              onSelect={handleProviderSelect}
               onClose={() => setModalType('none')}
             />
           </Box>

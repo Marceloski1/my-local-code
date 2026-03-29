@@ -73,5 +73,5 @@ export function useModels() {
     }
   };
 
-  return { models, loading, error, pulling, pullProgress, pullModel, selectModel };
+  return { models, loading, error, pulling, pullProgress, pullModel, selectModel, fetchModels };
 }
