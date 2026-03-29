@@ -1,0 +1,36 @@
+{
+  "name": "@agent/tui",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.tsx",
+    "cli": "tsx src/cli.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\"",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@agent/sdk": "workspace:*",
+    "@agent/shared": "workspace:*",
+    "ink": "^6.8.0",
+    "ink-text-input": "^6.0.0",
+    "lodash.throttle": "^4.1.1",
+    "react": "^19.2.4",
+    "supports-color": "^10.2.2",
+    "tsx": "^4.16.2",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.2",
+    "@types/lodash.throttle": "^4.1.9",
+    "@types/node": "^25.5.0",
+    "ink-testing-library": "^4.0.0",
+    "jsdom": "^26.0.0",
+    "typescript": "^5.4.5",
+    "vitest": "^4.1.1"
+  }
+}
