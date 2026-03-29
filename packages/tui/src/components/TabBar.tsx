@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 import { useAppStore } from '../store/app-store.js';
+import { INK_COLORS } from '../theme/colors.js';
 
 export function TabBar() {
   const activeScreen = useAppStore(state => state.activeScreen);
@@ -17,7 +18,7 @@ export function TabBar() {
         const isActive = activeScreen === tab.id;
         return (
           <Box key={tab.id} marginRight={2}>
-            <Text color={isActive ? 'blue' : 'gray'} bold={isActive}>
+            <Text color={isActive ? INK_COLORS.active : INK_COLORS.textSecondary} bold={isActive}>
               {idx + 1}. {tab.label}
             </Text>
           </Box>

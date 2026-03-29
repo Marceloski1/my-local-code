@@ -4,6 +4,7 @@ import TextInput from 'ink-text-input';
 import { useModels } from '../hooks/useModels.js';
 import { useAppStore } from '../store/app-store.js';
 import { ModelWarning } from '../components/ModelWarning.js';
+import { INK_COLORS } from '../theme/colors.js';
 
 export function ModelsScreen() {
   const { models, loading, error, pulling, pullProgress, pullModel, selectModel } = useModels();
@@ -69,20 +70,24 @@ export function ModelsScreen() {
     if (error.includes('Ollama no está disponible') || error.includes('ECONNREFUSED')) {
       return (
         <Box flexDirection="column" marginTop={1}>
-          <Text color="red" bold>
+          <Text color={INK_COLORS.error} bold>
             ❌ Ollama no está disponible
           </Text>
           <Box marginTop={1}>
-            <Text color="yellow">Ollama no está corriendo en http://localhost:11434</Text>
+            <Text color={INK_COLORS.warning}>
+              Ollama no está corriendo en http://localhost:11434
+            </Text>
           </Box>
           <Box marginTop={1}>
             <Text>Para iniciar Ollama, ejecuta:</Text>
           </Box>
           <Box marginLeft={2}>
-            <Text color="cyan">ollama serve</Text>
+            <Text color={INK_COLORS.secondary}>ollama serve</Text>
           </Box>
           <Box marginTop={1}>
-            <Text color="gray">Presiona 'q' para salir y luego inicia Ollama</Text>
+            <Text color={INK_COLORS.textSecondary}>
+              Presiona 'q' para salir y luego inicia Ollama
+            </Text>
           </Box>
         </Box>
       );
@@ -91,9 +96,9 @@ export function ModelsScreen() {
     // Generic error
     return (
       <Box flexDirection="column" marginTop={1}>
-        <Text color="red">Error: {error}</Text>
+        <Text color={INK_COLORS.error}>Error: {error}</Text>
         <Box marginTop={1}>
-          <Text color="gray">Presiona 'q' para salir</Text>
+          <Text color={INK_COLORS.textSecondary}>Presiona 'q' para salir</Text>
         </Box>
       </Box>
     );
@@ -105,11 +110,11 @@ export function ModelsScreen() {
         <Box
           flexDirection="column"
           borderStyle="round"
-          borderColor="yellow"
+          borderColor={INK_COLORS.warning}
           padding={1}
           marginBottom={1}
         >
-          <Text color="yellow" bold>
+          <Text color={INK_COLORS.warning} bold>
             ⚠️ Advertencia: Modelo Grande
           </Text>
           <Box marginTop={1}>
@@ -121,7 +126,9 @@ export function ModelsScreen() {
             <Text>¿Estás seguro de que quieres seleccionar este modelo?</Text>
           </Box>
           <Box marginTop={1}>
-            <Text color="cyan">Presiona 'Y' para confirmar o 'N' para cancelar</Text>
+            <Text color={INK_COLORS.secondary}>
+              Presiona 'Y' para confirmar o 'N' para cancelar
+            </Text>
           </Box>
         </Box>
       )}
@@ -138,13 +145,13 @@ export function ModelsScreen() {
 
           return (
             <Box key={model.name}>
-              <Text color={isSelected ? 'blue' : undefined}>
+              <Text color={isSelected ? INK_COLORS.active : undefined}>
                 {isSelected ? '> ' : '  '}
                 {isActive ? '★ ' : '  '}
                 {model.name}
               </Text>
               <Box marginLeft={2}>
-                <Text color="gray">
+                <Text color={INK_COLORS.textSecondary}>
                   {model.size ? (model.size / 1024 / 1024 / 1024).toFixed(2) : '0.00'} GB - Params:{' '}
                   {model.parameter_size || 'unknown'}
                 </Text>
@@ -160,14 +167,14 @@ export function ModelsScreen() {
 
       {isPullingInput && (
         <Box marginTop={1}>
-          <Text color="green">Nombre del modelo a descargar: </Text>
+          <Text color={INK_COLORS.success}>Nombre del modelo a descargar: </Text>
           <TextInput value={newModelName} onChange={setNewModelName} focus={true} />
         </Box>
       )}
 
       {pulling && (
         <Box marginTop={1}>
-          <Text color="blue">
+          <Text color={INK_COLORS.secondary}>
             Descargando...{' '}
             {Math.round((pullProgress.completed / Math.max(pullProgress.total || 1, 1)) * 100)}%
           </Text>

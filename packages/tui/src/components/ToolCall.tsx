@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { Box, Text } from 'ink';
+import { INK_COLORS } from '../theme/colors.js';
 
 interface ToolCallProps {
   toolName?: string;
@@ -17,20 +18,22 @@ export const ToolCall = memo(function ToolCall({
   if (type === 'call') {
     return (
       <Box>
-        <Text bold color="yellow">
+        <Text bold color={INK_COLORS.warning}>
           🔧 Tool:{' '}
         </Text>
-        <Text color="yellow">{toolName}</Text>
+        <Text color={INK_COLORS.warning}>{toolName}</Text>
       </Box>
     );
   }
 
   return (
     <Box>
-      <Text bold color="cyan">
-        ✓ Resultado:{' '}
-      </Text>
-      <Text color="gray">{toolResult?.substring(0, 100)}...</Text>
+      <Box>
+        <Text bold color={INK_COLORS.secondary}>
+          ✓ Resultado:{' '}
+        </Text>
+        <Text color={INK_COLORS.textSecondary}>{toolResult?.substring(0, 100)}...</Text>
+      </Box>
     </Box>
   );
 });

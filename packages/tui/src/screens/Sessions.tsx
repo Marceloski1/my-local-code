@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { AgentClient } from '@agent/sdk';
 import { useAppStore } from '../store/app-store.js';
+import { INK_COLORS } from '../theme/colors.js';
 
 const client = new AgentClient();
 
@@ -85,7 +86,7 @@ export function SessionsScreen() {
   if (loading) {
     return (
       <Box>
-        <Text color="gray">Cargando sesiones...</Text>
+        <Text color={INK_COLORS.textSecondary}>Cargando sesiones...</Text>
       </Box>
     );
   }
@@ -93,9 +94,9 @@ export function SessionsScreen() {
   if (error) {
     return (
       <Box flexDirection="column">
-        <Text color="red">Error: {error}</Text>
+        <Text color={INK_COLORS.error}>Error: {error}</Text>
         <Box marginTop={1}>
-          <Text color="gray">Presiona R para reintentar</Text>
+          <Text color={INK_COLORS.textSecondary}>Presiona R para reintentar</Text>
         </Box>
       </Box>
     );
@@ -105,14 +106,17 @@ export function SessionsScreen() {
     <Box flexDirection="column">
       <Box marginBottom={1}>
         <Text bold>Sesiones</Text>
-        <Text color="gray"> (↑↓: navegar, Enter: abrir, N: nueva, D: eliminar)</Text>
+        <Text color={INK_COLORS.textSecondary}>
+          {' '}
+          (↑↓: navegar, Enter: abrir, N: nueva, D: eliminar)
+        </Text>
       </Box>
 
       {sessions.length === 0 && (
         <Box flexDirection="column" marginTop={1}>
-          <Text color="yellow">No hay sesiones</Text>
+          <Text color={INK_COLORS.warning}>No hay sesiones</Text>
           <Box marginTop={1}>
-            <Text color="gray">Presiona N para crear una nueva sesión</Text>
+            <Text color={INK_COLORS.textSecondary}>Presiona N para crear una nueva sesión</Text>
           </Box>
         </Box>
       )}
@@ -123,12 +127,12 @@ export function SessionsScreen() {
 
         return (
           <Box key={session.id} marginTop={index === 0 ? 0 : 1}>
-            <Text color={isSelected ? 'cyan' : 'white'} bold={isSelected}>
+            <Text color={isSelected ? INK_COLORS.active : INK_COLORS.text} bold={isSelected}>
               {isSelected ? '> ' : '  '}
               {isActive ? '★ ' : ''}
               {session.title}
             </Text>
-            <Text color="gray"> ({formatDate(session.updatedAt)})</Text>
+            <Text color={INK_COLORS.textSecondary}> ({formatDate(session.updatedAt)})</Text>
           </Box>
         );
       })}

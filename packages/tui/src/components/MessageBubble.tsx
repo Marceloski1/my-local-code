@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { Box, Text } from 'ink';
+import { INK_COLORS } from '../theme/colors.js';
 
 interface MessageBubbleProps {
   role: 'user' | 'assistant';
@@ -10,7 +11,7 @@ export const MessageBubble = memo(function MessageBubble({ role, content }: Mess
   if (role === 'user') {
     return (
       <Box>
-        <Text bold color="blue">
+        <Text bold color={INK_COLORS.secondary}>
           Tú:{' '}
         </Text>
         <Text>{content}</Text>
@@ -20,7 +21,7 @@ export const MessageBubble = memo(function MessageBubble({ role, content }: Mess
 
   return (
     <Box>
-      <Text bold color="green">
+      <Text bold color={INK_COLORS.success}>
         Agente:{' '}
       </Text>
       <Text>{content}</Text>

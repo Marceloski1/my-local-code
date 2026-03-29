@@ -5,6 +5,7 @@ import { useAppStore } from '../store/app-store.js';
 import { useChat } from '../hooks/useChat.js';
 import { MessageBubble } from '../components/MessageBubble.js';
 import { ToolCall } from '../components/ToolCall.js';
+import { INK_COLORS } from '../theme/colors.js';
 
 export function ChatScreen() {
   const [input, setInput] = useState('');
@@ -44,14 +45,14 @@ export function ChatScreen() {
           flexGrow={1}
           flexDirection="column"
           borderStyle="round"
-          borderColor="gray"
+          borderColor={INK_COLORS.border}
           paddingX={1}
           justifyContent="center"
           alignItems="center"
         >
-          <Text color="yellow">No hay sesión activa</Text>
+          <Text color={INK_COLORS.warning}>No hay sesión activa</Text>
           <Box marginTop={1}>
-            <Text color="gray">
+            <Text color={INK_COLORS.textSecondary}>
               Ve a la pantalla de Sesiones (Tab 3) para crear una nueva sesión
             </Text>
           </Box>
@@ -68,14 +69,16 @@ export function ChatScreen() {
           flexGrow={1}
           flexDirection="column"
           borderStyle="round"
-          borderColor="gray"
+          borderColor={INK_COLORS.border}
           paddingX={1}
           justifyContent="center"
           alignItems="center"
         >
-          <Text color="yellow">No hay modelo activo</Text>
+          <Text color={INK_COLORS.warning}>No hay modelo activo</Text>
           <Box marginTop={1}>
-            <Text color="gray">Ve a la pantalla de Modelos (Tab 1) para seleccionar un modelo</Text>
+            <Text color={INK_COLORS.textSecondary}>
+              Ve a la pantalla de Modelos (Tab 1) para seleccionar un modelo
+            </Text>
           </Box>
         </Box>
       </Box>
@@ -86,8 +89,8 @@ export function ChatScreen() {
     <Box flexDirection="column" flexGrow={1}>
       {/* Disconnection banner */}
       {disconnected && (
-        <Box borderStyle="round" borderColor="yellow" paddingX={1} marginBottom={1}>
-          <Text color="yellow">⚠️ Conexión perdida. Presiona Enter para recargar</Text>
+        <Box borderStyle="round" borderColor={INK_COLORS.warning} paddingX={1} marginBottom={1}>
+          <Text color={INK_COLORS.warning}>⚠️ Conexión perdida. Presiona Enter para recargar</Text>
         </Box>
       )}
 
@@ -95,18 +98,20 @@ export function ChatScreen() {
       <Box
         flexDirection="column"
         borderStyle="round"
-        borderColor="gray"
+        borderColor={INK_COLORS.border}
         paddingX={1}
         paddingY={1}
         flexGrow={1}
         overflow="hidden"
       >
-        {loading && <Text color="gray">Cargando mensajes...</Text>}
+        {loading && <Text color={INK_COLORS.textSecondary}>Cargando mensajes...</Text>}
 
-        {error && <Text color="red">Error: {error}</Text>}
+        {error && <Text color={INK_COLORS.error}>Error: {error}</Text>}
 
         {!loading && messages.length === 0 && !isStreaming && (
-          <Text color="gray">No hay mensajes aún. Escribe algo abajo para comenzar...</Text>
+          <Text color={INK_COLORS.textSecondary}>
+            No hay mensajes aún. Escribe algo abajo para comenzar...
+          </Text>
         )}
 
         {/* Virtualize messages - only show last 50 when there are more than 50 */}
@@ -131,14 +136,14 @@ export function ChatScreen() {
 
         {isStreaming && !currentAssistantMessage && (
           <Box marginTop={messages.length > 0 ? 1 : 0}>
-            <Text color="gray">Pensando...</Text>
+            <Text color={INK_COLORS.warning}>Pensando...</Text>
           </Box>
         )}
       </Box>
 
       {/* Input area - fixed at bottom */}
       <Box marginTop={1}>
-        <Text bold color="cyan">
+        <Text bold color={INK_COLORS.secondary}>
           {'> '}
         </Text>
         <TextInput
