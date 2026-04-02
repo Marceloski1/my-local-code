@@ -1,118 +1,117 @@
 # Agent - Local Code Assistant
 
 ![alt text]({C97367D4-7C91-409D-8865-201F129F1735}.png)
-No se ha tenido acceso, por desgracia, al código de claude code para la realización de este proyecto
-Un asistente de código local que usa Ollama y LMStudio para ejecutar modelos de lenguaje con capacidad de usar herramientas (tool calling). Sistema completo con interfaz de terminal (TUI), servidor API, y gestión de sesiones persistentes.
+
+Unfortunately, we did not have access to Claude Code's source code for the development of this project.
+A local code assistant that uses Ollama and LMStudio to run language models with tool calling capabilities. Complete system with terminal interface (TUI), API server, and persistent session management.
 
 ## 🚀 Quick Start
 
-### Prerrequisitos
+### Prerequisites
 
-1. **Node.js 20+** (verifica con `node --version`)
-2. **pnpm 10.30.0+** (instala con `npm install -g pnpm`)
-3. **Proveedor de AI** (elige uno):
-   - **Ollama** ([ollama.ai](https://ollama.ai)) - Recomendado, fácil de usar
-   - **LMStudio** ([lmstudio.ai](https://lmstudio.ai)) - Alternativa con UI gráfica
+1. **Node.js 20+** (check with `node --version`)
+2. **pnpm 10.30.0+** (install with `npm install -g pnpm`)
+3. **AI Provider** (choose one):
+   - **Ollama** ([ollama.ai](https://ollama.ai)) - Recommended, easy to use
+   - **LMStudio** ([lmstudio.ai](https://lmstudio.ai)) - Alternative with graphical UI
 
-### Instalación
+### Installation
 
 ````bash
-# Clonar el repositorio
+# Clone the repository
 git clone <repo-url>
 cd local-code
 
-# Instalar dependencias
+# Install dependencies
 pnpm install
 
-# Compilar el proyecto
+# Build the project
 pnpm build
 
-# Opción A: Usar Ollama (recomendado)
-ollama pull qwen2.5:7b        # Mejor balance calidad/velocidad
-ollama pull llama3.2:3b       # Rápido, bueno para tareas simples
-ollama pull gemma2:9b         # Alta calidad, requiere más RAM
+# Option A: Use Ollama (recommended)
+ollama pull qwen2.5:7b        # Best quality/speed balance
+ollama pull llama3.2:3b       # Fast, good for simple tasks
+ollama pull gemma2:9b         # High quality, requires more RAM
 
-# Opción B: Usar LMStudio
-# 1. Descarga e instala LMStudio desde lmstudio.ai
-# 2. Descarga un modelo compatible desde la UI
-# 3. Inicia el servidor local en LMStudio (puerto 1234)
-# Ver docs/lmstudio-integration.md para más detalles
-```ama pull llama3.2:3b       # Rápido, bueno para tareas simples
-ollama pull gemma2:9b         # Alta calidad, requiere más RAM
-````
-
-### Iniciar la Aplicación
-
-```bash
-# Iniciar todo con un comando (CLI wrapper automático)
-pnpm dev
-
-# El CLI wrapper:
-# 1. Verifica Node.js ≥20
-# 2. Inicia el servidor en background
-# 3. Espera a que el servidor responda (health check)
-# 4. Inicia la TUI
-# 5. Coordina el shutdown cuando sales
-
-# Alternativamente, iniciar componentes por separado:
-pnpm dev:server    # Solo servidor (puerto 3000)
-pnpm dev:tui       # Solo TUI (requiere servidor corriendo)
+# Option B: Use LMStudio
+# 1. Download and install LMStudio from lmstudio.ai
+# 2. Download a compatible model from the UI
+# 3. Start the local server in LMStudio (port 1234)
+# See docs/lmstudio-integration.md for more details
 ```
 
-### Uso
+### Starting the Application
 
-1. **Pantalla de Modelos** (Tab 1):
-   - Selecciona un modelo con las flechas ↑↓
-   - Presiona Enter para activarlo
-   - Verifica que aparece ★ junto al modelo activo
-   - ⚠️ Advertencia automática para modelos >8GB
+```bash
+# Start everything with one command (automatic CLI wrapper)
+pnpm dev
 
-2. **Pantalla de Chat** (Tab 2):
-   - Escribe tu pregunta o comando
-   - El agente usa herramientas automáticamente:
-     - `read_file` - Leer archivos (con validación de paths)
-     - `write_file` - Crear/modificar archivos (con límites de tamaño)
-     - `edit_file` - Editar archivos existentes
-     - `bash` - Ejecutar comandos (whitelist de comandos seguros)
-     - `list_files` - Listar directorios
-     - `search_files` - Buscar en archivos (con protección ReDoS)
-   - Recuperación automática de desconexiones SSE
-   - Throttling de tokens (50ms) para performance fluida
+# The CLI wrapper:
+# 1. Verifies Node.js ≥20
+# 2. Starts the server in background
+# 3. Waits for server to respond (health check)
+# 4. Starts the TUI
+# 5. Coordinates shutdown when you exit
 
-3. **Pantalla de Sesiones** (Tab 3):
-   - Ver historial de conversaciones
-   - Continuar sesiones anteriores
-   - Eliminar sesiones
-   - Títulos dinámicos generados automáticamente
+# Alternatively, start components separately:
+pnpm dev:server    # Server only (port 3000)
+pnpm dev:tui       # TUI only (requires server running)
+```
 
-### Modos de Operación
+### Usage
 
-- **Plan Mode** (default): El agente pide permiso antes de ejecutar comandos destructivos
-- **Build Mode**: El agente ejecuta comandos automáticamente con delay de 500ms
-- Operaciones críticas (rm, format, .git, .env) siempre requieren confirmación
+1. **Models Screen** (Tab 1):
+   - Select a model with arrow keys ↑↓
+   - Press Enter to activate it
+   - Verify that ★ appears next to the active model
+   - ⚠️ Automatic warning for models >8GB
 
-Cambia entre modos con `Ctrl+M`.
+2. **Chat Screen** (Tab 2):
+   - Type your question or command
+   - The agent uses tools automatically:
+     - `read_file` - Read files (with path validation)
+     - `write_file` - Create/modify files (with size limits)
+     - `edit_file` - Edit existing files
+     - `bash` - Execute commands (safe command whitelist)
+     - `list_files` - List directories
+     - `search_files` - Search in files (with ReDoS protection)
+   - Automatic recovery from SSE disconnections
+   - Token throttling (50ms) for smooth performance
+
+3. **Sessions Screen** (Tab 3):
+   - View conversation history
+   - Continue previous sessions
+   - Delete sessions
+   - Dynamically generated titles
+
+### Operation Modes
+
+- **Plan Mode** (default): Agent asks permission before executing destructive commands
+- **Build Mode**: Agent executes commands automatically with 500ms delay
+- Critical operations (rm, format, .git, .env) always require confirmation
+
+Switch between modes with `Ctrl+M`.
 
 ---
 
-## 📁 Estructura del Proyecto
+## 📁 Project Structure
 
 ```
 local-code/
 ├── packages/
-│   ├── server/      # API REST + Agent Loop + Tools
-│   │   ├── src/agent/       # Loop ReAct, parser, permisos
+│   ├── server/      # REST API + Agent Loop + Tools
+│   │   ├── src/agent/       # ReAct Loop, parser, permissions
 │   │   ├── src/ai/          # Providers (Ollama, LMStudio)
 │   │   ├── src/db/          # Drizzle ORM + SQLite
 │   │   ├── src/lib/         # Error handler, logger, shutdown
-│   │   ├── src/routes/      # Endpoints HTTP
-│   │   └── src/tools/       # 6 herramientas del agente
-│   ├── sdk/         # Cliente TypeScript + SSE
+│   │   ├── src/routes/      # HTTP Endpoints
+│   │   └── src/tools/       # 6 agent tools
+│   ├── sdk/         # TypeScript Client + SSE
 │   ├── tui/         # Terminal UI (Ink + Zustand)
-│   └── shared/      # Tipos y constantes compartidas
-├── scripts/         # Scripts de validación (modelos, ANSI, perf)
-├── docs/            # Documentación de fases + specs de tests
-├── auditoria-seguridad/  # Auditoría y correcciones de seguridad
+│   └── shared/      # Shared types and constants
+├── scripts/         # Validation scripts (models, ANSI, perf)
+├── docs/            # Phase documentation + test specs
+├── auditoria-seguridad/  # Security audit and fixes
 └── .husky/          # Git hooks (commitlint, pre-commit)
 ```
 
@@ -121,54 +120,54 @@ local-code/
 ## 🧪 Testing
 
 ```bash
-# Ejecutar todos los tests
+# Run all tests
 pnpm test
 
-# Tests por paquete
+# Tests per package
 pnpm --filter @agent/server test
 pnpm --filter @agent/sdk test
 pnpm --filter @agent/tui test
 ```
 
-### Scripts de Validación
+### Validation Scripts
 
 ```bash
-# Verificar soporte de colores ANSI en tu terminal
+# Check ANSI color support in your terminal
 node scripts/test-ansi.ts
 
-# Validar compatibilidad de modelos con tool calling
+# Validate model compatibility with tool calling
 node scripts/test-models.ts
 
-# Benchmark de performance de la TUI
+# TUI performance benchmark
 node scripts/test-ink-perf.ts
 ```
 
-### Cobertura de Tests
+### Test Coverage
 
-- Fase 1: 33 tests (servidor base + DB)
-- Fase 2: 52 tests (SDK + TUI)
-- Fase 3: 128 tests (tools + agent loop)
-- Fase 4: 127 tests (chat + sesiones)
-- Total especificado: 340 tests
+- Phase 1: 33 tests (base server + DB)
+- Phase 2: 52 tests (SDK + TUI)
+- Phase 3: 128 tests (tools + agent loop)
+- Phase 4: 127 tests (chat + sessions)
+- Total specified: 340 tests
 
 ---
 
-## 🔧 Desarrollo
+## 🔧 Development
 
-### Compilar
+### Build
 
 ```bash
-# Compilar todos los paquetes
+# Build all packages
 pnpm build
 
-# Compilar un paquete específico
+# Build a specific package
 pnpm --filter @agent/server build
 ```
 
-### Linting, Formatting y Type Checking
+### Linting, Formatting and Type Checking
 
 ```bash
-# Lint (ESLint con TypeScript + React + Prettier)
+# Lint (ESLint with TypeScript + React + Prettier)
 pnpm lint
 pnpm lint:fix
 
@@ -185,245 +184,229 @@ pnpm spell-check
 
 ### Commits
 
-Este proyecto usa [Conventional Commits](https://www.conventionalcommits.org/):
+This project uses [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```bash
-# Usar el asistente de commits
+# Use the commit assistant
 pnpm commit
 
-# O manualmente
-git commit -m "feat: agregar nueva funcionalidad"
-git commit -m "fix: corregir bug en chat"
-git commit -m "docs: actualizar README"
+# Or manually
+git commit -m "feat: add new feature"
+git commit -m "fix: fix chat bug"
+git commit -m "docs: update README"
 ```
 
 ---
 
-## 📚 Documentación
+## 📚 Documentation
 
-### Configuración
+### Configuration
 
 - [ESLint Setup](docs/eslint-setup.md)
 - [Prettier Setup](docs/prettier-setup.md)
 - [Git Hooks Setup](docs/git-hooks-setup.md)
 
-**Total**: 340 tests especificados
+**Total**: 340 tests specified
 
-### Auditoría de Seguridad
+### Security Audit
 
-- [Vulnerabilidades Identificadas](auditoria-seguridad/01-vulnerabilidades.md)
-- [Plan de Remediación](auditoria-seguridad/02-plan-de-remediacion.md)
-- [Controles Preventivos](auditoria-seguridad/03-controles-preventivos.md)
-- [Resumen Ejecutivo](auditoria-seguridad/04-resumen-ejecutivo.md)
+- [Identified Vulnerabilities](auditoria-seguridad/01-vulnerabilidades.md)
+- [Remediation Plan](auditoria-seguridad/02-plan-de-remediacion.md)
+- [Preventive Controls](auditoria-seguridad/03-controles-preventivos.md)
+- [Executive Summary](auditoria-seguridad/04-resumen-ejecutivo.md)
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Error: "Ollama no está disponible"
+### Error: "Ollama is not available" / "LMStudio is not available"
 
-**Causa**: Ollama no está corriendo o no responde.
+**Cause**: The AI provider is not running or not responding.
 
-**Solución**:
+**Solution for Ollama**:
 
 ```bash
-# Iniciar Ollama
+# Start Ollama
 ollama serve
 
-# Verificar que está corriendo
+# Verify it's running
 curl http://localhost:11434/api/tags
 ```
 
-## 🐛 Troubleshooting
+**Solution for LMStudio**:
 
-### Error: "Ollama no está disponible" / "LMStudio no está disponible"
+1. Open LMStudio
+2. Go to the "Local Server" tab
+3. Load a model
+4. Click "Start Server" (default port 1234)
+5. Verify: `curl http://localhost:1234/v1/models`
 
-**Causa**: El proveedor de AI no está corriendo o no responde.
+The system automatically detects when the provider is not available and displays a clear message in the TUI.
 
-**Solución para Ollama**:
+See [docs/lmstudio-integration.md](docs/lmstudio-integration.md) for detailed LMStudio configuration.
 
-```bash
-# Iniciar Ollama
-ollama serve
+### Performance Optimizations
 
-# Verificar que está corriendo
-curl http://localhost:11434/api/tags
-```
+- Virtualization (only last 50 messages when >50)
+- React.memo on heavy components
 
-**Solución para LMStudio**:
-
-1. Abre LMStudio
-2. Ve a la pestaña "Local Server"
-3. Carga un modelo
-4. Haz clic en "Start Server" (puerto 1234 por defecto)
-5. Verifica: `curl http://localhost:1234/v1/models`
-
-El sistema detecta automáticamente cuando el proveedor no está disponible y muestra un mensaje claro en la TUI.
-
-Consulta [docs/lmstudio-integration.md](docs/lmstudio-integration.md) para configuración detallada de LMStudio.
-
-- Virtualización (solo últimos 50 mensajes cuando >50)
-- React.memo en componentes pesados
-
-### Logs para debugging
+### Debugging Logs
 
 ```bash
-# Ver logs del servidor (desarrollo)
+# View server logs (development)
 LOG_LEVEL=debug pnpm dev:server
 
-# Logs en producción (JSON)
+# Production logs (JSON)
 NODE_ENV=production pnpm dev:server
 ```
 
-Para más problemas, consulta [docs/troubleshooting.md](docs/troubleshooting.md).
+For more issues, see [docs/troubleshooting.md](docs/troubleshooting.md).
 
 ---
 
-## 🏗️ Arquitectura
+## 🏗️ Architecture
 
-### Stack Tecnológico
+### Technology Stack
 
 - **Backend**: Hono + Drizzle ORM + SQLite
-- **AI**: Vercel AI SDK + Ollama (soporte para LMStudio)
-- **Frontend**: Ink (React para terminal) + Zustand
+- **AI**: Vercel AI SDK + Ollama (LMStudio support)
+- **Frontend**: Ink (React for terminal) + Zustand
 - **Monorepo**: pnpm workspaces + Turbo
 - **Linting**: ESLint + TypeScript ESLint + React plugins
-- **Formatting**: Prettier (integrado con ESLint)
+- **Formatting**: Prettier (integrated with ESLint)
 - **Testing**: Vitest + fast-check (property-based testing)
 - **Logging**: Pino (structured logging)
 - **Git Hooks**: Husky + Commitlint
 - **Language**: TypeScript
 
-### Comandos de Desarrollo
+### Development Commands
 
 ```bash
-# Desarrollo
-pnpm dev                    # Iniciar todo (CLI wrapper)
-pnpm dev:server             # Solo servidor
-pnpm dev:tui                # Solo TUI
-pnpm build                  # Compilar todos los packages
-pnpm test                   # Ejecutar tests
-pnpm typecheck              # Verificar tipos TypeScript
+# Development
+pnpm dev                    # Start everything (CLI wrapper)
+pnpm dev:server             # Server only
+pnpm dev:tui                # TUI only
+pnpm build                  # Build all packages
+pnpm test                   # Run tests
+pnpm typecheck              # Check TypeScript types
 
-# Linting y Formato
-pnpm lint                   # Ejecutar ESLint en todo el monorepo
-pnpm lint:fix               # Auto-fix de errores de ESLint
-pnpm format                 # Formatear código con Prettier
-pnpm format:check           # Verificar formato sin modificar
-pnpm spell-check            # Verificar ortografía
+# Linting and Formatting
+pnpm lint                   # Run ESLint on entire monorepo
+pnpm lint:fix               # Auto-fix ESLint errors
+pnpm format                 # Format code with Prettier
+pnpm format:check           # Check format without modifying
+pnpm spell-check            # Check spelling
 
 # Commits
-pnpm commit                 # Asistente de commits (Conventional Commits)
+pnpm commit                 # Commit assistant (Conventional Commits)
 
-# Por package
+# Per package
 pnpm --filter @agent/sdk lint
 pnpm --filter @agent/server format
 pnpm --filter @agent/tui lint:fix
 ```
 
-Para más información:
+For more information:
 
 - ESLint: [docs/eslint-setup.md](docs/eslint-setup.md)
 - Prettier: [docs/prettier-setup.md](docs/prettier-setup.md)
 - Git Hooks: [docs/git-hooks-setup.md](docs/git-hooks-setup.md)
 
-### Flujo de Datos
+### Data Flow
 
 ```
-TUI (Ink) → SDK Client → Server API → Agent Loop → Ollama
+TUI (Ink) → SDK Client → Server API → Agent Loop → AI Provider (Ollama/LMStudio)
                                     ↓
                                 SQLite (sessions, messages)
-### Flujo de Datos
-
 ```
 
-TUI (Ink) → SDK Client → Server API → Agent Loop → AI Provider (Ollama/LMStudio)
-↓
-SQLite (sessions, messages)
+### Supported AI Providers
 
-```
+The system supports multiple AI providers through Vercel AI SDK:
 
-### Proveedores de AI Soportados
-
-El sistema soporta múltiples proveedores de AI a través de Vercel AI SDK:
-
-1. **Ollama** (por defecto)
-   - Puerto: 11434
+1. **Ollama** (default)
+   - Port: 11434
    - Endpoint: `http://localhost:11434`
-   - Gestión de modelos: CLI (`ollama pull`, `ollama list`)
-   - Documentación: [docs/lmstudio-integration.md](docs/lmstudio-integration.md)
+   - Model management: CLI (`ollama pull`, `ollama list`)
+   - Documentation: [docs/lmstudio-integration.md](docs/lmstudio-integration.md)
 
 2. **LMStudio**
-   - Puerto: 1234
+   - Port: 1234
    - Endpoint: `http://localhost:1234/v1`
-   - Gestión de modelos: UI gráfica
-   - Compatible con API de OpenAI
-   - Documentación: [docs/lmstudio-integration.md](docs/lmstudio-integration.md)
+   - Model management: Graphical UI
+   - OpenAI API compatible
+   - Documentation: [docs/lmstudio-integration.md](docs/lmstudio-integration.md)
 
-El servidor detecta automáticamente qué proveedor está disponible y se adapta.Si necesita herramienta:
-   - En modo Plan: pide permiso
-   - En modo Build: ejecuta con delay
-4. Ejecuta herramienta y obtiene resultado
-5. Agente analiza resultado y continúa o responde
-6. Todos los mensajes se persisten en SQLite
+The server automatically detects which provider is available and adapts accordingly.
+
+### Agent Flow
+
+1. User sends message
+2. Agent analyzes and decides if it needs a tool
+3. If tool needed:
+   - In Plan mode: asks permission
+   - In Build mode: executes with delay
+4. Executes tool and gets result
+5. Agent analyzes result and continues or responds
+6. All messages are persisted in SQLite
 
 ---
 
 ## 🎯 Roadmap
 
-### ✅ Completado (Fases 0-5)
+### ✅ Completed (Phases 0-5)
 
-- [x] Monorepo con pnpm + Turbo
-- [x] Servidor Hono con endpoints de modelos, chat y sesiones
-- [x] Base de datos SQLite con Drizzle
-- [x] SDK cliente con soporte SSE y resync
-- [x] TUI completa con 3 pantallas (Modelos, Chat, Sesiones)
-- [x] 6 herramientas del agente con validación de seguridad
-- [x] Loop ReAct completo con detección de loops
-- [x] Modos plan/build con permisos críticos
-- [x] Compactación de contexto
-- [x] CLI wrapper con health check y shutdown coordinado
-- [x] Logging estructurado con Pino
+- [x] Monorepo with pnpm + Turbo
+- [x] Hono server with models, chat and sessions endpoints
+- [x] SQLite database with Drizzle
+- [x] Client SDK with SSE support and resync
+- [x] Complete TUI with 3 screens (Models, Chat, Sessions)
+- [x] 6 agent tools with security validation
+- [x] Complete ReAct loop with loop detection
+- [x] Plan/build modes with critical permissions
+- [x] Context compaction
+- [x] CLI wrapper with health check and coordinated shutdown
+- [x] Structured logging with Pino
 - [x] Graceful shutdown
-- [x] Manejo robusto de errores (Ollama, SSE, tools)
-- [x] Recuperación automática de desconexiones SSE
-- [x] Optimizaciones de performance (throttling, virtualización, memo)
-- [x] Títulos dinámicos de sesiones
-- [x] Advertencias para modelos grandes
+- [x] Robust error handling (Ollama, SSE, tools)
+- [x] Automatic recovery from SSE disconnections
+- [x] Performance optimizations (throttling, virtualization, memo)
+- [x] Dynamic session titles
+- [x] Warnings for large models
 - [x] Git hooks (commitlint, pre-commit)
-- [x] Auditoría de seguridad (10/15 vulnerabilidades corregidas)
+- [x] Security audit (10/15 vulnerabilities fixed)
 
-### 🔒 Seguridad Implementada
+### 🔒 Implemented Security
 
-- [x] Validación de paths (anti path-traversal)
-- [x] Whitelist de comandos bash
-- [x] Protección contra prompt injection
-- [x] Redacción de secretos en logs
-- [x] Filtrado de variables de entorno
-- [x] Protección ReDoS en regex
-- [x] Permisos críticos obligatorios
-- [x] Detección mejorada de loops
-- [x] Timeouts en operaciones de archivos
-- [x] Stack traces solo en desarrollo
+- [x] Path validation (anti path-traversal)
+- [x] Bash command whitelist
+- [x] Prompt injection protection
+- [x] Secret redaction in logs
+- [x] Environment variable filtering
+- [x] ReDoS protection in regex
+- [x] Mandatory critical permissions
+- [x] Improved loop detection
+- [x] Timeouts on file operations
+- [x] Stack traces only in development
 
-### 📋 Pendiente
+### 📋 Pending
 
-- [ ] Cifrado de base de datos (VULN-008)
+- [ ] Database encryption (VULN-008)
 - [ ] Rate limiting (VULN-009)
-- [ ] Compactación real con LLM (VULN-013)
-- [ ] Análisis estático con eslint-plugin-security
-- [ ] Métricas de seguridad
-- [ ] Documentación de modelos compatibles (MODELS.md)
+- [ ] Real compaction with LLM (VULN-013)
+- [ ] Static analysis with eslint-plugin-security
+- [ ] Security metrics
+- [ ] Compatible models documentation (MODELS.md)
 
 ---
 
-## 🤝 Contribuir
+## 🤝 Contributing
 
-1. Fork el repositorio
-2. Crea una rama: `git checkout -b feature/nueva-funcionalidad`
-3. Commit tus cambios: `pnpm commit`
-4. Push a la rama: `git push origin feature/nueva-funcionalidad`
-5. Abre un Pull Request
+1. Fork the repository
+2. Create a branch: `git checkout -b feature/new-feature`
+3. Commit your changes: `pnpm commit`
+4. Push to the branch: `git push origin feature/new-feature`
+5. Open a Pull Request
 
 ---
 
@@ -450,16 +433,20 @@ Para más detalles, consulta la [auditoría de seguridad](auditoria-seguridad/RE
 
 ---
 
-## 🙏 Agradecimientos
+## 🙏 Acknowledgments
 
-- [Ollama](https://ollama.ai) - Modelos de lenguaje locales
-- [Vercel AI SDK](https://sdk.vercel.ai) - Framework de AI
-- [Ink](https://github.com/vadimdemedes/ink) - React para terminal
-- [Hono](https://hono.dev) - Framework web ultrarrápido
-- [Drizzle](https://orm.drizzle.team) - ORM TypeScript
-- [Pino](https://getpino.io) - Logging estructurado
+- [Ollama](https://ollama.ai) - Local language models
+- [Vercel AI SDK](https://sdk.vercel.ai) - AI Framework
+- [Ink](https://github.com/vadimdemedes/ink) - React for terminal
+- [Hono](https://hono.dev) - Ultra-fast web framework
+- [Drizzle](https://orm.drizzle.team) - TypeScript ORM
+- [Pino](https://getpino.io) - Structured logging
 - [Vitest](https://vitest.dev) - Testing framework
-- [Turbo](https://turbo.build) - Build system para monorepos
+- [Turbo](https://turbo.build) - Build system for monorepos
 
 ---
+
 ```
+
+```
+````
