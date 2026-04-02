@@ -26,8 +26,8 @@ export function useModels() {
         setServerConnected(true);
         setError(null);
       })
-      .catch((e: any) => {
-        setError(e.message);
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : String(e));
         setServerConnected(false);
       })
       .finally(() => setLoading(false));
@@ -51,8 +51,8 @@ export function useModels() {
         }
       }
       fetchModels();
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setPulling(false);
     }
@@ -63,12 +63,13 @@ export function useModels() {
       await client.setActiveModel(name);
       setActiveModel(name);
       setError(null); // Clear any previous errors
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
       // Check if it's a model not found error
-      if (e.message.includes('404') || e.message.includes('not found')) {
+      if (errorMessage.includes('404') || errorMessage.includes('not found')) {
         setError(`Modelo ${name} no encontrado. Descárgalo primero con 'ollama pull ${name}'`);
       } else {
-        setError(e.message);
+        setError(errorMessage);
       }
     }
   };

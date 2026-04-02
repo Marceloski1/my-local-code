@@ -23,7 +23,7 @@ export function SessionsScreen() {
   const setScreen = useAppStore(state => state.setScreen);
 
   useEffect(() => {
-    loadSessions();
+    void loadSessions();
   }, []);
 
   const loadSessions = async () => {
@@ -32,8 +32,8 @@ export function SessionsScreen() {
       const list = await client.listSessions();
       setSessions(list);
       setError(null);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }
@@ -45,8 +45,8 @@ export function SessionsScreen() {
       setSessions(prev => [session, ...prev]);
       setActiveSessionId(session.id);
       setScreen('chat');
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     }
   };
 
@@ -62,8 +62,8 @@ export function SessionsScreen() {
       if (activeSessionId === id) {
         setActiveSessionId(null);
       }
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     }
   };
 
@@ -77,9 +77,9 @@ export function SessionsScreen() {
     } else if (key.return && sessions.length > 0) {
       selectSession(sessions[selectedIndex]);
     } else if (input === 'n') {
-      createNewSession();
+      void createNewSession();
     } else if (input === 'd' && sessions.length > 0) {
-      deleteSession(sessions[selectedIndex].id);
+      void deleteSession(sessions[selectedIndex].id);
     }
   });
 

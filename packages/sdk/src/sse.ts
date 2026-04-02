@@ -18,6 +18,7 @@ export async function* parseSSE<T>(response: Response): AsyncGenerator<T> {
         try {
           yield JSON.parse(dataStr) as T;
         } catch (e) {
+          // eslint-disable-next-line no-console
           console.error('SDK: Error parsing SSE JSON', e, dataStr);
         }
       }

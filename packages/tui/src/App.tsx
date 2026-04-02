@@ -26,7 +26,7 @@ export function App() {
   const [sessions, setSessions] = useState<Array<{ id: string; title: string; updatedAt: string }>>(
     []
   );
-  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [_loadingSessions, setLoadingSessions] = useState(false);
   const [currentProvider, setCurrentProvider] = useState<'ollama' | 'lmstudio'>('ollama');
 
   const activeSessionId = useAppStore(state => state.activeSessionId);
@@ -122,7 +122,7 @@ export function App() {
           setInput(selectedCommand);
           setModalType('none');
           // Execute the command
-          handleSubmit(selectedCommand);
+          void handleSubmit(selectedCommand);
         }
         return;
       }
@@ -243,7 +243,7 @@ export function App() {
   };
 
   const handleModelSelect = (modelName: string) => {
-    selectModel(modelName);
+    void selectModel(modelName);
     setModalType('none');
   };
 
@@ -252,7 +252,7 @@ export function App() {
       await client.setProvider(provider);
       setCurrentProvider(provider);
       // Reload models after changing provider
-      await fetchModels();
+      fetchModels();
       setModalType('none');
     } catch (e) {
       console.error('Failed to set provider:', e);
@@ -277,7 +277,7 @@ export function App() {
     }
   };
 
-  const handleSessionRename = async (sessionId: string, newTitle: string) => {
+  const handleSessionRename = (sessionId: string, newTitle: string) => {
     // TODO: Implement rename in API
     console.log('Rename session:', sessionId, newTitle);
   };
@@ -305,7 +305,7 @@ export function App() {
                 <MessageBubble role={msg.role} content={msg.content} />
               )}
               {msg.role === 'tool_call' && (
-                <ToolCall type="call" toolName={msg.toolName} toolArgs={msg.toolArgs} />
+                <ToolCall type="call" toolName={msg.toolName} _toolArgs={msg.toolArgs} />
               )}
               {msg.role === 'tool_result' && <ToolCall type="result" toolResult={msg.toolResult} />}
             </Box>
@@ -346,7 +346,7 @@ export function App() {
           <Box marginTop={1} marginBottom={1}>
             <ProviderSelector
               currentProvider={currentProvider}
-              onSelect={handleProviderSelect}
+              onSelect={provider => void handleProviderSelect(provider)}
               onClose={() => setModalType('none')}
             />
           </Box>
@@ -358,8 +358,8 @@ export function App() {
               sessions={sessions}
               activeSessionId={activeSessionId || undefined}
               onSelect={handleSessionSelect}
-              onDelete={handleSessionDelete}
-              onRename={handleSessionRename}
+              onDelete={id => void handleSessionDelete(id)}
+              _onRename={handleSessionRename}
               onClose={() => setModalType('none')}
             />
           </Box>
@@ -373,7 +373,7 @@ export function App() {
               <TextInput
                 value={input}
                 onChange={handleInputChange}
-                onSubmit={handleSubmit}
+                onSubmit={value => void handleSubmit(value)}
                 placeholder='"Fix broken tests"'
               />
             </Box>

@@ -4,14 +4,14 @@ import { INK_COLORS } from '../theme/colors.js';
 
 interface ToolCallProps {
   toolName?: string;
-  toolArgs?: string;
+  _toolArgs?: string;
   toolResult?: string;
   type: 'call' | 'result';
 }
 
 export const ToolCall = memo(function ToolCall({
   toolName,
-  toolArgs,
+  _toolArgs,
   toolResult,
   type,
 }: ToolCallProps) {

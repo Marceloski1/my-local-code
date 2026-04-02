@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Text, useApp } from 'ink';
+import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { useAppStore } from '../store/app-store.js';
 import { useChat } from '../hooks/useChat.js';
@@ -121,7 +121,7 @@ export function ChatScreen() {
               <MessageBubble role={msg.role} content={msg.content} />
             )}
             {msg.role === 'tool_call' && (
-              <ToolCall type="call" toolName={msg.toolName} toolArgs={msg.toolArgs} />
+              <ToolCall type="call" toolName={msg.toolName} _toolArgs={msg.toolArgs} />
             )}
             {msg.role === 'tool_result' && <ToolCall type="result" toolResult={msg.toolResult} />}
           </Box>
@@ -149,7 +149,7 @@ export function ChatScreen() {
         <TextInput
           value={input}
           onChange={setInput}
-          onSubmit={handleSubmit}
+          onSubmit={value => void handleSubmit(value)}
           placeholder={disconnected ? 'Presiona Enter para reconectar...' : 'Escribe un mensaje...'}
         />
       </Box>

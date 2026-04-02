@@ -40,7 +40,7 @@ async function waitForServer(maxWaitMs: number = 30000): Promise<boolean> {
       if (response.ok) {
         return true;
       }
-    } catch (error) {
+    } catch (_error) {
       // Server not ready yet, continue waiting
     }
 

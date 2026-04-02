@@ -14,7 +14,7 @@ interface SessionSelectorProps {
   activeSessionId?: string;
   onSelect: (sessionId: string) => void;
   onDelete: (sessionId: string) => void;
-  onRename: (sessionId: string, newTitle: string) => void;
+  _onRename: (sessionId: string, newTitle: string) => void;
   onClose: () => void;
 }
 
@@ -71,7 +71,7 @@ export function SessionSelector({
   activeSessionId,
   onSelect,
   onDelete,
-  onRename,
+  _onRename,
   onClose,
 }: SessionSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');

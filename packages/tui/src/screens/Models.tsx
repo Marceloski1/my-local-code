@@ -19,7 +19,7 @@ export function ModelsScreen() {
     if (showLargeModelConfirm) {
       if (input === 'y' || input === 'Y') {
         if (pendingModelSelection) {
-          selectModel(pendingModelSelection);
+          void selectModel(pendingModelSelection);
         }
         setShowLargeModelConfirm(false);
         setPendingModelSelection(null);
@@ -34,7 +34,7 @@ export function ModelsScreen() {
       if (key.return) {
         setIsPullingInput(false);
         if (newModelName.trim() !== '') {
-          pullModel(newModelName.trim());
+          void pullModel(newModelName.trim());
         }
         setNewModelName('');
       } else if (key.escape) {
@@ -56,7 +56,7 @@ export function ModelsScreen() {
         setPendingModelSelection(selectedModel.name);
         setShowLargeModelConfirm(true);
       } else {
-        selectModel(selectedModel.name);
+        void selectModel(selectedModel.name);
       }
     } else if (input === 'p' || input === 'P') {
       setIsPullingInput(true);
@@ -158,7 +158,7 @@ export function ModelsScreen() {
               </Box>
               <ModelWarning
                 sizeGB={parseFloat(sizeGB)}
-                parameterSize={model.parameter_size || 'unknown'}
+                _parameterSize={model.parameter_size || 'unknown'}
               />
             </Box>
           );

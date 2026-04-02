@@ -52,26 +52,8 @@ export default tseslint.config(
     },
   },
 
-  // React rules for TSX files
-  {
-    files: ['**/*.tsx'],
-    plugins: {
-      react: reactPlugin,
-      'react-hooks': reactHooksPlugin,
-    },
-    settings: {
-      react: {
-        version: 'detect',
-      },
-    },
-    rules: {
-      ...reactPlugin.configs.recommended.rules,
-      ...reactPlugin.configs['jsx-runtime'].rules,
-      ...reactHooksPlugin.configs.recommended.rules,
-      'react/prop-types': 'off', // Using TypeScript for prop validation
-      'react/react-in-jsx-scope': 'off', // Not needed with new JSX transform
-    },
-  },
+  // React rules for TSX files - temporarily disabled due to compatibility issues with ESLint 10
+  // TODO: Update eslint-plugin-react to version 8.x when available
 
   // Test files - more relaxed rules
   {

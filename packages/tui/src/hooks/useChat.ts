@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AgentClient } from '@agent/sdk';
-import { useAppStore } from '../store/app-store.js';
 import throttle from 'lodash.throttle';
 
 const client = new AgentClient();
@@ -31,6 +30,22 @@ export function useChat(sessionId: string | null) {
     []
   );
 
+  const loadMessages = useCallback(async () => {
+    if (!sessionId) return;
+
+    setLoading(true);
+    try {
+      const session = await client.getSession(sessionId);
+      setMessages(session.messages as Message[]);
+      setError(null);
+      setDisconnected(false); // Clear disconnection state on successful load
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionId]);
+
   // Load messages when sessionId changes
   useEffect(() => {
     if (!sessionId) {
@@ -38,8 +53,8 @@ export function useChat(sessionId: string | null) {
       return;
     }
 
-    loadMessages();
-  }, [sessionId]);
+    void loadMessages();
+  }, [sessionId, loadMessages]);
 
   // Detect disconnection - check if no events received in 5 seconds while streaming
   useEffect(() => {
@@ -56,23 +71,7 @@ export function useChat(sessionId: string | null) {
     return () => clearInterval(interval);
   }, [isStreaming, lastEventTime]);
 
-  const loadMessages = async () => {
-    if (!sessionId) return;
-
-    setLoading(true);
-    try {
-      const session = await client.getSession(sessionId);
-      setMessages(session.messages as Message[]);
-      setError(null);
-      setDisconnected(false); // Clear disconnection state on successful load
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resync = async () => {
+  const resync = useCallback(async () => {
     if (!sessionId) return;
 
     setLoading(true);
@@ -81,105 +80,111 @@ export function useChat(sessionId: string | null) {
       setMessages(session.messages as Message[]);
       setError(null);
       setDisconnected(false);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }
-  };
+  }, [sessionId]);
 
-  const sendMessage = async (content: string) => {
-    if (!sessionId || !content.trim()) return;
+  const sendMessage = useCallback(
+    async (content: string) => {
+      if (!sessionId || !content.trim()) return;
 
-    // Add user message immediately
-    const userMessage: Message = {
-      id: `temp-${Date.now()}`,
-      role: 'user',
-      content,
-    };
-    setMessages(prev => [...prev, userMessage]);
+      // Add user message immediately
+      const userMessage: Message = {
+        id: `temp-${Date.now()}`,
+        role: 'user',
+        content,
+      };
+      setMessages(prev => [...prev, userMessage]);
 
-    setIsStreaming(true);
-    setCurrentAssistantMessage('');
-    setError(null);
-    setDisconnected(false);
-    setLastEventTime(Date.now());
+      setIsStreaming(true);
+      setCurrentAssistantMessage('');
+      setError(null);
+      setDisconnected(false);
+      setLastEventTime(Date.now());
 
-    // Accumulate assistant message locally
-    let accumulatedMessage = '';
+      // Accumulate assistant message locally
+      let accumulatedMessage = '';
 
-    try {
-      // Stream response from agent
-      for await (const event of client.sendMessage(sessionId, content)) {
-        setLastEventTime(Date.now()); // Update last event time on each event
+      try {
+        // Stream response from agent
+        for await (const event of client.sendMessage(sessionId, content)) {
+          setLastEventTime(Date.now()); // Update last event time on each event
 
-        if (event.type === 'token') {
-          accumulatedMessage += event.data;
-          throttledSetCurrentMessage(accumulatedMessage);
-        } else if (event.type === 'tool_call') {
-          // Tool call event
-          const toolCallMsg: Message = {
-            id: `tool-call-${Date.now()}`,
-            role: 'tool_call',
-            content: '',
-            toolName: (event.data as any).toolName,
-            toolArgs: JSON.stringify((event.data as any).args),
-          };
-          setMessages(prev => [...prev, toolCallMsg]);
-        } else if (event.type === 'tool_result') {
-          // Tool result event
-          const toolResultMsg: Message = {
-            id: `tool-result-${Date.now()}`,
-            role: 'tool_result',
-            content: '',
-            toolResult: JSON.stringify((event.data as any).result),
-          };
-          setMessages(prev => [...prev, toolResultMsg]);
-        } else if (event.type === 'done') {
-          // Add final assistant message using accumulated content
-          if (accumulatedMessage) {
-            const assistantMsg: Message = {
-              id: `assistant-${Date.now()}`,
-              role: 'assistant',
-              content: accumulatedMessage,
+          if (event.type === 'token') {
+            accumulatedMessage += String(event.data);
+            throttledSetCurrentMessage(accumulatedMessage);
+          } else if (event.type === 'tool_call') {
+            // Tool call event
+            const eventData = event.data as { toolName: string; args: unknown };
+            const toolCallMsg: Message = {
+              id: `tool-call-${Date.now()}`,
+              role: 'tool_call',
+              content: '',
+              toolName: eventData.toolName,
+              toolArgs: JSON.stringify(eventData.args),
             };
-            setMessages(prev => [...prev, assistantMsg]);
-          }
-          setCurrentAssistantMessage('');
-          accumulatedMessage = '';
-        } else if (event.type === 'error') {
-          // Preserve partial message if we have accumulated content
-          if (accumulatedMessage) {
-            const partialMsg: Message = {
-              id: `assistant-partial-${Date.now()}`,
-              role: 'assistant',
-              content: accumulatedMessage + '\n\n❌ Error: ' + (event.data as string),
+            setMessages(prev => [...prev, toolCallMsg]);
+          } else if (event.type === 'tool_result') {
+            // Tool result event
+            const eventData = event.data as { result: unknown };
+            const toolResultMsg: Message = {
+              id: `tool-result-${Date.now()}`,
+              role: 'tool_result',
+              content: '',
+              toolResult: JSON.stringify(eventData.result),
             };
-            setMessages(prev => [...prev, partialMsg]);
+            setMessages(prev => [...prev, toolResultMsg]);
+          } else if (event.type === 'done') {
+            // Add final assistant message using accumulated content
+            if (accumulatedMessage) {
+              const assistantMsg: Message = {
+                id: `assistant-${Date.now()}`,
+                role: 'assistant',
+                content: accumulatedMessage,
+              };
+              setMessages(prev => [...prev, assistantMsg]);
+            }
             setCurrentAssistantMessage('');
             accumulatedMessage = '';
-          } else {
-            setError(event.data as string);
+          } else if (event.type === 'error') {
+            // Preserve partial message if we have accumulated content
+            if (accumulatedMessage) {
+              const partialMsg: Message = {
+                id: `assistant-partial-${Date.now()}`,
+                role: 'assistant',
+                content: accumulatedMessage + '\n\n❌ Error: ' + (event.data as string),
+              };
+              setMessages(prev => [...prev, partialMsg]);
+              setCurrentAssistantMessage('');
+              accumulatedMessage = '';
+            } else {
+              setError(event.data as string);
+            }
           }
         }
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : String(e);
+        // Preserve partial message if we have accumulated content
+        if (accumulatedMessage) {
+          const partialMsg: Message = {
+            id: `assistant-partial-${Date.now()}`,
+            role: 'assistant',
+            content: accumulatedMessage + '\n\n❌ Error: ' + errorMessage,
+          };
+          setMessages(prev => [...prev, partialMsg]);
+          setCurrentAssistantMessage('');
+        } else {
+          setError(errorMessage);
+        }
+      } finally {
+        setIsStreaming(false);
       }
-    } catch (e: any) {
-      // Preserve partial message if we have accumulated content
-      if (accumulatedMessage) {
-        const partialMsg: Message = {
-          id: `assistant-partial-${Date.now()}`,
-          role: 'assistant',
-          content: accumulatedMessage + '\n\n❌ Error: ' + e.message,
-        };
-        setMessages(prev => [...prev, partialMsg]);
-        setCurrentAssistantMessage('');
-      } else {
-        setError(e.message);
-      }
-    } finally {
-      setIsStreaming(false);
-    }
-  };
+    },
+    [sessionId, throttledSetCurrentMessage]
+  );
 
   return {
     messages,
