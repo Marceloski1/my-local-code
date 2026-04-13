@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm run *)",
+      "Bash(node *)",
+      "Bash(dir *)",
+      "Bash(pnpm *)",
+      "Bash(taskkill *)",
+      "Bash(cat)",
+      "Bash(/**)",
+      "Bash(* *)",
+      "Bash(*/)",
+      "Bash(// *)",
+      "Bash(const *)"
+    ]
+  },
+  "$version": 3
+}
