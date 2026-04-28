@@ -6,7 +6,8 @@ export const COLORS = {
   // Acentos
   PRIMARY: '#E53935', // Rojo - Acento primario
   SECONDARY: '#1E88E5', // Azul - Acento secundario
-  ACTIVE: '#42A5F5', // Azul brillante - Selección / activo
+  ACCENT: '#42A5F5', // Azul brillante - Selección / activo / código inline
+  ACTIVE: '#42A5F5', // Azul brillante - Selección / activo (alias de ACCENT)
 
   // Superficie y UI
   SURFACE: '#2A2D36', // Gris oscuro - Superficie / UI chrome
@@ -29,6 +30,7 @@ export const INK_COLORS = {
   // Acentos
   primary: COLORS.PRIMARY,
   secondary: COLORS.SECONDARY,
+  accent: COLORS.ACCENT,
   active: COLORS.ACTIVE,
 
   // Texto

@@ -7,12 +7,9 @@ build
 
 *.log
 cmd
-planing
-docs
 *.tsbuildinfo
 __tests__
 .vscode
 .kiro
 auditoria-seguridad
-CONTINUACION-FASE-5.md
 scripts

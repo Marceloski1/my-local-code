@@ -7,9 +7,11 @@ Detalle técnico de cada módulo: responsabilidad, interfaz pública, dependenci
 ## 1. `packages/shared` — Contratos Compartidos ← NUEVO
 
 ### Responsabilidad
+
 Definir Zod schemas, tipos TypeScript e interfaces que usan tanto el server como el SDK. Single source of truth para la forma de los datos que cruzan la frontera HTTP/SSE.
 
 ### Interfaz pública
+
 ```typescript
 // schemas/models.ts
 export const ListModelsResponseSchema = z.object({ models: z.array(OllamaModelSchema) });
@@ -28,18 +30,28 @@ export const MessageSchema = z.object({
   role: z.enum(['user', 'assistant', 'tool_call', 'tool_result', 'system']),
   content: z.string(),
   toolName: z.string().optional(),
-  toolArgs: z.string().optional(),   // JSON string
+  toolArgs: z.string().optional(), // JSON string
   toolResult: z.string().optional(), // JSON string
   sequence: z.number(),
   createdAt: z.string(),
 });
 
 // schemas/config.ts
-export const ConfigSchema = z.object({ mode: z.enum(['plan', 'build']), activeModel: z.string().nullable() });
+export const ConfigSchema = z.object({
+  mode: z.enum(['plan', 'build']),
+  activeModel: z.string().nullable(),
+});
 
 // types/agent.ts
 export interface AgentResponse {
-  type: 'token' | 'tool_call' | 'tool_result' | 'permission_request' | 'done' | 'error' | 'compaction';
+  type:
+    | 'token'
+    | 'tool_call'
+    | 'tool_result'
+    | 'permission_request'
+    | 'done'
+    | 'error'
+    | 'compaction';
   data: string | ToolCallData | PermissionRequest;
 }
 
@@ -89,6 +101,7 @@ export const DEFAULTS = {
 ```
 
 ### Dependencias internas
+
 - Solo `zod`. Sin dependencias de Node ni de otros packages internos.
 
 ---
@@ -96,52 +109,58 @@ export const DEFAULTS = {
 ## 2. `packages/server` — Módulo DB (`db/`)
 
 ### Responsabilidad
+
 Gestionar la conexión a SQLite y exponer el schema Drizzle. Ejecutar migraciones automáticamente al arrancar.
 
 ### Interfaz pública
+
 ```typescript
 // connection.ts
 export function getDb(): BetterSQLite3Database;
 export function closeDb(): void;
 
 // schema.ts
-export const sessions: SQLiteTable;   // id, title, createdAt, updatedAt
-export const messages: SQLiteTable;   // id, sessionId, role, content, toolName, toolArgs, toolResult, sequence, createdAt
-export const config: SQLiteTable;     // key (unique), value (JSON string)
-export const sessionMetadata: SQLiteTable;  // ← NUEVO: metadata no compactable (Riesgo 4)
-  // id, sessionId, type ('file_modified'|'command_executed'|'error_found'|'decision_made'), key, value, createdAt
+export const sessions: SQLiteTable; // id, title, createdAt, updatedAt
+export const messages: SQLiteTable; // id, sessionId, role, content, toolName, toolArgs, toolResult, sequence, createdAt
+export const config: SQLiteTable; // key (unique), value (JSON string)
+export const sessionMetadata: SQLiteTable; // ← NUEVO: metadata no compactable (Riesgo 4)
+// id, sessionId, type ('file_modified'|'command_executed'|'error_found'|'decision_made'), key, value, createdAt
 
 // migrate.ts
 export function runMigrations(): void;
 ```
 
 ### Dependencias internas
+
 - `lib/paths.ts` para resolver la ruta del archivo `.db`
 - `@agent/shared` para tipos de roles y constantes
 
 ### Errores a manejar
-| Error | Causa | Acción |
-|-------|-------|--------|
+
+| Error             | Causa                        | Acción                                                                              |
+| ----------------- | ---------------------------- | ----------------------------------------------------------------------------------- |
 | `SQLITE_CANTOPEN` | Path no existe o sin permiso | Crear directorio padre con `mkdirSync(recursive)`. Si falla, exit con mensaje claro |
-| `SQLITE_CORRUPT` | DB corrupta | Log error, ofrecer path para backup, crear nueva DB |
-| `SQLITE_LOCKED` | Otro proceso usa la DB | Improbable (single client), pero retry 3 veces con backoff |
-| Migration falla | Schema incompatible | Log el SQL que falló, exit con instrucciones de recuperación |
+| `SQLITE_CORRUPT`  | DB corrupta                  | Log error, ofrecer path para backup, crear nueva DB                                 |
+| `SQLITE_LOCKED`   | Otro proceso usa la DB       | Improbable (single client), pero retry 3 veces con backoff                          |
+| Migration falla   | Schema incompatible          | Log el SQL que falló, exit con instrucciones de recuperación                        |
 
 ---
 
 ## 3. `packages/server` — Módulo AI Provider (`ai/`) ← RENOMBRADO de `ollama/`
 
 ### Responsabilidad
+
 Gestionar la comunicación con el proveedor de AI a través del **Vercel AI SDK**. Abstrae el proveedor concreto (Ollama, LMStudio, OpenAI) detrás de la interfaz del SDK. También expone funciones de gestión directa de Ollama (listar/descargar modelos) que no tienen equivalente en el Vercel AI SDK.
 
 ### Interfaz pública
+
 ```typescript
 // provider.ts — Configuración del proveedor via Vercel AI SDK
 import { createOpenAI } from '@ai-sdk/openai';
 
 export function createAIProvider(config: AIProviderConfig): ReturnType<typeof createOpenAI> {
   return createOpenAI({
-    baseURL: config.baseURL,  // 'http://localhost:11434/v1' para Ollama
+    baseURL: config.baseURL, // 'http://localhost:11434/v1' para Ollama
     apiKey: config.apiKey ?? 'ollama', // Ollama no requiere API key real
   });
 }
@@ -153,17 +172,33 @@ export function createAIProvider(config: AIProviderConfig): ReturnType<typeof cr
 
 // ollama-management.ts — Funciones directas de Ollama (fuera del SDK)
 export async function listModels(): Promise<OllamaModel[]>;
-export async function showModel(name: string): Promise<OllamaModelInfo>;  // incluye context_length
-export async function pullModel(name: string, onProgress: (event: PullProgress) => void): Promise<void>;
+export async function showModel(name: string): Promise<OllamaModelInfo>; // incluye context_length
+export async function pullModel(
+  name: string,
+  onProgress: (event: PullProgress) => void
+): Promise<void>;
 
 // types.ts
-export interface OllamaModel { name: string; size: number; modifiedAt: string; }
-export interface OllamaModelInfo { context_length: number; parameters: string; /* ... */ }
-export interface PullProgress { status: string; completed?: number; total?: number; }
+export interface OllamaModel {
+  name: string;
+  size: number;
+  modifiedAt: string;
+}
+export interface OllamaModelInfo {
+  context_length: number;
+  parameters: string; /* ... */
+}
+export interface PullProgress {
+  status: string;
+  completed?: number;
+  total?: number;
+}
 ```
 
 ### Cambio de proveedor
+
 Para agregar LMStudio en el futuro:
+
 ```typescript
 // Solo cambiar la configuración:
 createAIProvider({
@@ -174,27 +209,31 @@ createAIProvider({
 ```
 
 ### Dependencias internas
+
 - `ai` (Vercel AI SDK core) y `@ai-sdk/openai` (proveedor compatible)
 - `@agent/shared` para tipos
 - `lib/logger.ts` para logging de requests/responses
 
 ### Errores a manejar
-| Error | Causa | Acción |
-|-------|-------|--------|
-| `ECONNREFUSED` en `:11434` | Ollama no está corriendo | Retornar error tipado `OllamaNotAvailable`. La ruta que llama decide si enviar mensaje a la TUI |
-| Timeout (>120s sin token) | Modelo muy lento o colgado | AbortController con timeout configurable, retornar `OllamaTimeout` |
-| 404 en modelo | Modelo no descargado | Retornar `ModelNotFound` con el nombre para que la UI sugiera descargarlo |
-| Stream corta inesperadamente | Ollama crashea mid-response | Detectar stream incompleto, retornar `OllamaStreamError` con respuesta parcial |
-| Pull falla midway | Disco lleno, red cortada | Llamar `onProgress` con status `"error"` y detalle del error |
+
+| Error                        | Causa                       | Acción                                                                                          |
+| ---------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------- |
+| `ECONNREFUSED` en `:11434`   | Ollama no está corriendo    | Retornar error tipado `OllamaNotAvailable`. La ruta que llama decide si enviar mensaje a la TUI |
+| Timeout (>120s sin token)    | Modelo muy lento o colgado  | AbortController con timeout configurable, retornar `OllamaTimeout`                              |
+| 404 en modelo                | Modelo no descargado        | Retornar `ModelNotFound` con el nombre para que la UI sugiera descargarlo                       |
+| Stream corta inesperadamente | Ollama crashea mid-response | Detectar stream incompleto, retornar `OllamaStreamError` con respuesta parcial                  |
+| Pull falla midway            | Disco lleno, red cortada    | Llamar `onProgress` con status `"error"` y detalle del error                                    |
 
 ---
 
 ## 4. `packages/server` — Tools del Agente (`tools/`)
 
 ### Responsabilidad
+
 Cada tool ejecuta una acción atómica sobre el filesystem o el shell. Todos siguen la misma interfaz. El registry los agrupa. Los schemas Zod se usan directamente con `streamText({ tools })` del Vercel AI SDK.
 
 ### Interfaz pública
+
 ```typescript
 // registry.ts
 import { tool } from 'ai'; // Vercel AI SDK
@@ -210,27 +249,28 @@ export function getVercelTools(): Record<string, ReturnType<typeof tool>> {
     read_file: tool({
       description: 'Lee el contenido de un archivo',
       parameters: readFileSchema,
-      execute: async (params) => executeToolInternal('read_file', params),
+      execute: async params => executeToolInternal('read_file', params),
     }),
     // ... etc
   };
 }
 
-export function getToolDefinitions(): ToolDefinition[];  // Para el system prompt textual (fallback)
+export function getToolDefinitions(): ToolDefinition[]; // Para el system prompt textual (fallback)
 ```
 
 ### Detalle por tool
 
-| Tool | Params | Permisos | Notas |
-|------|--------|----------|-------|
-| `read_file` | `{ path: string }` | No | Lee con `utf-8`. Si el archivo es >100KB, trunca y avisa |
-| `write_file` | `{ path, content }` | **Sí** | Crea directorios padres. Sobreescribe si existe |
-| `edit_file` | `{ path, old_str, new_str }` | **Sí** | Reemplaza primera ocurrencia. Error si `old_str` no se encuentra |
-| `bash` | `{ command: string }` | **Sí** | Timeout 30s default. Shell: detectada con `detectShell()` (Decisión 3D) |
-| `list_files` | `{ path, maxDepth? }` | No | Default depth 3, max 10. Ignora node_modules, .git, dist, build |
-| `search_files` | `{ pattern, path, caseSensitive? }` | No | Grep recursivo, 3 líneas contexto. Máximo 50 resultados |
+| Tool           | Params                              | Permisos | Notas                                                                   |
+| -------------- | ----------------------------------- | -------- | ----------------------------------------------------------------------- |
+| `read_file`    | `{ path: string }`                  | No       | Lee con `utf-8`. Si el archivo es >100KB, trunca y avisa                |
+| `write_file`   | `{ path, content }`                 | **Sí**   | Crea directorios padres. Sobreescribe si existe                         |
+| `edit_file`    | `{ path, old_str, new_str }`        | **Sí**   | Reemplaza primera ocurrencia. Error si `old_str` no se encuentra        |
+| `bash`         | `{ command: string }`               | **Sí**   | Timeout 30s default. Shell: detectada con `detectShell()` (Decisión 3D) |
+| `list_files`   | `{ path, maxDepth? }`               | No       | Default depth 3, max 10. Ignora node_modules, .git, dist, build         |
+| `search_files` | `{ pattern, path, caseSensitive? }` | No       | Grep recursivo, 3 líneas contexto. Máximo 50 resultados                 |
 
 ### Dependencias internas
+
 - Solo `node:fs`, `node:child_process`, `node:path`
 - `lib/paths.ts` para normalización de paths cross-platform
 - `lib/shell.ts` para `detectShell()` (Decisión 3D)
@@ -238,23 +278,26 @@ export function getToolDefinitions(): ToolDefinition[];  // Para el system promp
 - `@agent/shared` para tipos `ToolSpec`, `ToolResult`
 
 ### Errores a manejar
-| Error | Causa | Acción |
-|-------|-------|--------|
-| `ENOENT` | Archivo/directorio no existe | `{ success: false, output: "", error: "File not found: /path" }` |
-| `EACCES` | Sin permisos | `{ success: false, output: "", error: "Permission denied: /path" }` |
-| `EPERM` en Windows | Archivo bloqueado por otro proceso | Misma respuesta que `EACCES` |
-| Timeout en bash | Comando tarda >30s | Kill el proceso, retornar output parcial + error timeout |
-| Shell no encontrada | Configuración rara | Fallback: `pwsh` → `powershell` → `cmd` en Windows, `bash` → `sh` en Linux |
-| Output excesivo | `bash` genera GB de output | Limitar captura a 50KB, truncar y avisar |
+
+| Error               | Causa                              | Acción                                                                     |
+| ------------------- | ---------------------------------- | -------------------------------------------------------------------------- |
+| `ENOENT`            | Archivo/directorio no existe       | `{ success: false, output: "", error: "File not found: /path" }`           |
+| `EACCES`            | Sin permisos                       | `{ success: false, output: "", error: "Permission denied: /path" }`        |
+| `EPERM` en Windows  | Archivo bloqueado por otro proceso | Misma respuesta que `EACCES`                                               |
+| Timeout en bash     | Comando tarda >30s                 | Kill el proceso, retornar output parcial + error timeout                   |
+| Shell no encontrada | Configuración rara                 | Fallback: `pwsh` → `powershell` → `cmd` en Windows, `bash` → `sh` en Linux |
+| Output excesivo     | `bash` genera GB de output         | Limitar captura a 50KB, truncar y avisar                                   |
 
 ---
 
 ## 5. `packages/server` — Loop del Agente (`agent/`)
 
 ### Responsabilidad
+
 Orquestrar el ciclo ReAct completo: recibir mensaje del usuario, razonar con el LLM via Vercel AI SDK, ejecutar tools, iterar hasta respuesta final. Gestionar modos, compactación de contexto, y el enfoque híbrido de tool calling (Decisión 1C).
 
 ### Interfaz pública
+
 ```typescript
 // loop.ts
 import { streamText } from 'ai';
@@ -295,6 +338,7 @@ export function buildSystemPrompt(
 ```
 
 ### Dependencias internas
+
 - `ai/provider.ts` — para obtener el modelo del Vercel AI SDK
 - `tools/registry.ts` — para obtener tools en formato Vercel SDK y ejecutarlos
 - `agent/parser.ts` — para fallback textual (Decisión 5: A+C)
@@ -303,6 +347,7 @@ export function buildSystemPrompt(
 - `@agent/shared` para tipos y constantes
 
 ### Flujo del loop (actualizado con Vercel AI SDK)
+
 ```
 1. Cargar historial de messages de la sesión (DB)
 2. Append userMessage al historial
@@ -329,56 +374,64 @@ export function buildSystemPrompt(
 ```
 
 ### Errores a manejar
-| Error | Causa | Acción |
-|-------|-------|--------|
-| Proveedor AI falla mid-stream | Crash, OOM | Yield error con respuesta parcial, guardar en DB |
-| Tool falla | Cualquier error del tool | Inyectar error como tool_result, dejar que el LLM decida (suele auto-corregir) |
-| Max iteraciones | LLM en loop | Yield error y último estado del contexto |
-| Parsing textual falla | LLM genera formato inesperado | Tratar toda la respuesta como texto plano (respuesta final) |
-| Compactación falla | Proveedor AI falla al resumir | Skip compactación, continuar con historial completo, warn en logs |
+
+| Error                         | Causa                         | Acción                                                                         |
+| ----------------------------- | ----------------------------- | ------------------------------------------------------------------------------ |
+| Proveedor AI falla mid-stream | Crash, OOM                    | Yield error con respuesta parcial, guardar en DB                               |
+| Tool falla                    | Cualquier error del tool      | Inyectar error como tool_result, dejar que el LLM decida (suele auto-corregir) |
+| Max iteraciones               | LLM en loop                   | Yield error y último estado del contexto                                       |
+| Parsing textual falla         | LLM genera formato inesperado | Tratar toda la respuesta como texto plano (respuesta final)                    |
+| Compactación falla            | Proveedor AI falla al resumir | Skip compactación, continuar con historial completo, warn en logs              |
 
 ---
 
 ## 6. `packages/server` — Rutas HTTP (`routes/`)
 
 ### Responsabilidad
+
 Definir endpoints REST y SSE. Validar input con Zod (schemas de `@agent/shared`). Delegar lógica a los módulos correspondientes. No contener lógica de negocio.
 
 ### Interfaz pública (endpoints)
 
 #### Health
-| Método | Ruta | Request | Response |
-|--------|------|---------|----------|
-| GET | `/health` | — | `{ status: "ok", timestamp, ollamaAvailable: bool }` |
+
+| Método | Ruta      | Request | Response                                             |
+| ------ | --------- | ------- | ---------------------------------------------------- |
+| GET    | `/health` | —       | `{ status: "ok", timestamp, ollamaAvailable: bool }` |
 
 #### Models
-| Método | Ruta | Request | Response |
-|--------|------|---------|----------|
-| GET | `/api/models` | — | `{ models: OllamaModel[] }` |
-| POST | `/api/models/pull` | `{ name: string }` | SSE stream: `{ status, completed?, total? }` |
-| GET | `/api/models/active` | — | `{ model: string \| null }` |
-| POST | `/api/models/active` | `{ model: string }` | `{ ok: true }` |
+
+| Método | Ruta                 | Request             | Response                                     |
+| ------ | -------------------- | ------------------- | -------------------------------------------- |
+| GET    | `/api/models`        | —                   | `{ models: OllamaModel[] }`                  |
+| POST   | `/api/models/pull`   | `{ name: string }`  | SSE stream: `{ status, completed?, total? }` |
+| GET    | `/api/models/active` | —                   | `{ model: string \| null }`                  |
+| POST   | `/api/models/active` | `{ model: string }` | `{ ok: true }`                               |
 
 #### Sessions
-| Método | Ruta | Request | Response |
-|--------|------|---------|----------|
-| POST | `/api/sessions` | `{ title?: string }` | `{ id, title, createdAt }` |
-| GET | `/api/sessions` | — | `{ sessions: Session[] }` |
-| GET | `/api/sessions/:id` | — | `{ session: Session, messages: Message[] }` |
-| DELETE | `/api/sessions/:id` | — | `{ ok: true }` |
+
+| Método | Ruta                | Request              | Response                                    |
+| ------ | ------------------- | -------------------- | ------------------------------------------- |
+| POST   | `/api/sessions`     | `{ title?: string }` | `{ id, title, createdAt }`                  |
+| GET    | `/api/sessions`     | —                    | `{ sessions: Session[] }`                   |
+| GET    | `/api/sessions/:id` | —                    | `{ session: Session, messages: Message[] }` |
+| DELETE | `/api/sessions/:id` | —                    | `{ ok: true }`                              |
 
 #### Messages
-| Método | Ruta | Request | Response |
-|--------|------|---------|----------|
-| POST | `/api/sessions/:id/messages` | `{ content: string }` | SSE stream: `AgentResponse` events con sequence |
+
+| Método | Ruta                         | Request               | Response                                        |
+| ------ | ---------------------------- | --------------------- | ----------------------------------------------- |
+| POST   | `/api/sessions/:id/messages` | `{ content: string }` | SSE stream: `AgentResponse` events con sequence |
 
 #### Config
-| Método | Ruta | Request | Response |
-|--------|------|---------|----------|
-| GET | `/api/config` | — | `{ mode, activeModel, ... }` |
-| POST | `/api/config/mode` | `{ mode: 'plan' \| 'build' }` | `{ ok: true }` |
+
+| Método | Ruta               | Request                       | Response                     |
+| ------ | ------------------ | ----------------------------- | ---------------------------- |
+| GET    | `/api/config`      | —                             | `{ mode, activeModel, ... }` |
+| POST   | `/api/config/mode` | `{ mode: 'plan' \| 'build' }` | `{ ok: true }`               |
 
 ### Dependencias internas
+
 - Cada ruta importa del módulo que necesita: `ai/`, `agent/`, `db/`
 - `middleware/sse.ts` para las rutas SSE (con sequence numbers)
 - `@agent/shared` para validación con Zod schemas
@@ -388,13 +441,15 @@ Definir endpoints REST y SSE. Validar input con Zod (schemas de `@agent/shared`)
 ## 7. `packages/sdk` — Cliente HTTP
 
 ### Responsabilidad
+
 Proveer un cliente TypeScript tipado para la TUI (o cualquier otro consumidor) que abstrae los detalles HTTP y SSE.
 
 ### Interfaz pública
+
 ```typescript
 // client.ts
 export class AgentClient {
-  constructor(baseUrl?: string);  // Default 'http://localhost:4096'
+  constructor(baseUrl?: string); // Default 'http://localhost:4096'
 
   // Models
   listModels(): Promise<OllamaModel[]>;
@@ -421,33 +476,38 @@ export class AgentClient {
 ```
 
 ### Dependencias internas
+
 - `@agent/shared` para tipos y schemas (Decisión 2B — NO depende de `@agent/server`)
 - `sse.ts` helper local para parsear SSE con tracking de `sequence` numbers
 
 ### Errores a manejar
-| Error | Causa | Acción |
-|-------|-------|--------|
-| `ECONNREFUSED` en `:4096` | Server no corriendo | Throw `ServerNotAvailable` con mensaje descriptivo |
-| HTTP 4xx | Validación, not found | Throw error tipado con status y body parseado |
-| HTTP 5xx | Error del server | Throw `ServerError` con detalle |
+
+| Error                         | Causa                   | Acción                                                                      |
+| ----------------------------- | ----------------------- | --------------------------------------------------------------------------- |
+| `ECONNREFUSED` en `:4096`     | Server no corriendo     | Throw `ServerNotAvailable` con mensaje descriptivo                          |
+| HTTP 4xx                      | Validación, not found   | Throw error tipado con status y body parseado                               |
+| HTTP 5xx                      | Error del server        | Throw `ServerError` con detalle                                             |
 | SSE se cierra inesperadamente | Server crashea, timeout | El AsyncIterable termina. Exponer `resync(sessionId)` para recuperar estado |
-| JSON parse falla | Respuesta malformada | Throw `InvalidResponse` con body raw |
+| JSON parse falla              | Respuesta malformada    | Throw `InvalidResponse` con body raw                                        |
 
 ---
 
 ## 8. `packages/tui` — Aplicación terminal
 
 ### Responsabilidad
+
 Renderizar la interfaz de usuario en la terminal. Gestionar input del usuario. Consumir datos del SDK. No contiene lógica de negocio.
 
 ### Módulos internos
 
 #### `app.tsx`
+
 - Layout principal: `<Box flexDirection="column">`
 - Renderiza `<Header>`, `<TabBar>`, y la pantalla activa
 - **Gestiona estado global con Zustand** (Decisión 4B)
 
 #### `store/app-store.ts` — Zustand Store
+
 ```typescript
 import { create } from 'zustand';
 
@@ -465,28 +525,30 @@ interface AppStore {
   setServerConnected: (connected: boolean) => void;
 }
 
-export const useAppStore = create<AppStore>((set) => ({
+export const useAppStore = create<AppStore>(set => ({
   activeScreen: 'chat',
   activeModel: null,
   mode: 'plan',
   activeSessionId: null,
   serverConnected: false,
 
-  setScreen: (screen) => set({ activeScreen: screen }),
-  setModel: (model) => set({ activeModel: model }),
-  setMode: (mode) => set({ mode }),
-  setSession: (id) => set({ activeSessionId: id }),
-  setServerConnected: (connected) => set({ serverConnected: connected }),
+  setScreen: screen => set({ activeScreen: screen }),
+  setModel: model => set({ activeModel: model }),
+  setMode: mode => set({ mode }),
+  setSession: id => set({ activeSessionId: id }),
+  setServerConnected: connected => set({ serverConnected: connected }),
 }));
 ```
 
 #### `screens/models.tsx`
+
 - Muestra lista de modelos con `useModels()` hook
 - Input para pull de nuevo modelo con barra de progreso
 - Indicador de modelo activo (★)
 - **Muestra tamaño y parámetros de cada modelo** (Riesgo 7 mitigación)
 
 #### `screens/chat.tsx`
+
 - Scrollable message list
 - Input de texto con `<TextInput>` de ink-text-input
 - Streaming con **throttle de 50ms** (Riesgo 6 mitigación)
@@ -496,29 +558,33 @@ export const useAppStore = create<AppStore>((set) => ({
 - **Resync después de desconexión** (Riesgo 5 mitigación)
 
 #### `screens/sessions.tsx`
+
 - Lista de sesiones con fecha y preview
 - Seleccionar para continuar
 - Delete con confirmación
 
 #### Hooks
-| Hook | Responsabilidad | SDK calls que usa |
-|------|----------------|-------------------|
-| `useModels` | Lista, pull, selección de modelo | `listModels`, `pullModel`, `setActiveModel` |
-| `useChat` | Enviar mensaje, recibir stream con throttle, resync | `sendMessage`, `getSession` |
-| `useSessions` | CRUD sesiones | `createSession`, `listSessions`, `getSession`, `deleteSession` |
-| `useConfig` | Modo activo, config | `getConfig`, `setMode` |
-| `useKeyboard` | Atajos globales | Ninguno (solo Ink stdin) |
+
+| Hook          | Responsabilidad                                     | SDK calls que usa                                              |
+| ------------- | --------------------------------------------------- | -------------------------------------------------------------- |
+| `useModels`   | Lista, pull, selección de modelo                    | `listModels`, `pullModel`, `setActiveModel`                    |
+| `useChat`     | Enviar mensaje, recibir stream con throttle, resync | `sendMessage`, `getSession`                                    |
+| `useSessions` | CRUD sesiones                                       | `createSession`, `listSessions`, `getSession`, `deleteSession` |
+| `useConfig`   | Modo activo, config                                 | `getConfig`, `setMode`                                         |
+| `useKeyboard` | Atajos globales                                     | Ninguno (solo Ink stdin)                                       |
 
 ### Dependencias internas
+
 - `@agent/sdk` para toda comunicación con el server
 - `zustand` para gestión de estado (Decisión 4B)
 - `supports-color` para detección de soporte ANSI (Riesgo 2)
 - `lib/ansi-windows.ts` para compatibilidad Windows
 
 ### Errores a manejar
-| Error | Causa | Acción |
-|-------|-------|--------|
-| Server no disponible | Server no arrancado | Pantalla de error: "Server no disponible. Ejecuta `pnpm dev:server`" |
-| Ollama no disponible | Error propagado del server | Pantalla de error en Modelos: "Ollama no está corriendo" |
-| SSE se corta | Red, server crash | Mostrar "Conexión perdida. Presiona Enter para recargar" + resync |
-| Terminal no soporta ANSI | Terminal antigua | Detectar con `supports-color`, modo sin colores + warning |
+
+| Error                    | Causa                      | Acción                                                               |
+| ------------------------ | -------------------------- | -------------------------------------------------------------------- |
+| Server no disponible     | Server no arrancado        | Pantalla de error: "Server no disponible. Ejecuta `pnpm dev:server`" |
+| Ollama no disponible     | Error propagado del server | Pantalla de error en Modelos: "Ollama no está corriendo"             |
+| SSE se corta             | Red, server crash          | Mostrar "Conexión perdida. Presiona Enter para recargar" + resync    |
+| Terminal no soporta ANSI | Terminal antigua           | Detectar con `supports-color`, modo sin colores + warning            |

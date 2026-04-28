@@ -5,9 +5,11 @@ Cada fase termina con algo **funcionando y demostrable**. No se avanza a la sigu
 ---
 
 ## Fase 0 — Scaffold del monorepo
+
 **Duración estimada:** 1 día
 
 ### Se construye
+
 - Repositorio Git inicializado
 - `pnpm-workspace.yaml` con **cuatro** packages: `packages/server`, `packages/tui`, `packages/sdk`, **`packages/shared`** (Decisión 2B)
 - `turbo.json` con pipelines: `build`, `dev`, `lint`, `typecheck`
@@ -20,6 +22,7 @@ Cada fase termina con algo **funcionando y demostrable**. No se avanza a la sigu
 - Carpeta `scripts/` para scripts de validación
 
 ### Demostrable al final
+
 - `pnpm install` → no errores
 - `pnpm turbo build` → pipeline ejecuta, `@agent/shared` se compila primero
 - Importar tipos de `@agent/shared` en `@agent/server` → funciona sin errores
@@ -28,9 +31,11 @@ Cada fase termina con algo **funcionando y demostrable**. No se avanza a la sigu
 ---
 
 ## Fase 1 — Servidor base + DB + Vercel AI SDK
+
 **Duración estimada:** 3-4 días
 
 ### Se construye
+
 - Hono server en `packages/server` con `@hono/node-server`
 - `GET /health` → `{ status: "ok", timestamp }`
 - Schema Drizzle: tablas `sessions`, `messages`, `config`, **`session_metadata`** (mitigación Riesgo 4)
@@ -46,6 +51,7 @@ Cada fase termina con algo **funcionando y demostrable**. No se avanza a la sigu
 - Validación de inputs con Zod schemas de `@agent/shared`
 
 ### Demostrable al final
+
 - Server arranca en `:4096`
 - `curl /health` → 200
 - `curl /api/models` → lista modelos de Ollama
@@ -56,9 +62,11 @@ Cada fase termina con algo **funcionando y demostrable**. No se avanza a la sigu
 ---
 
 ## Fase 2 — SDK + TUI shell + pantalla de Modelos
+
 **Duración estimada:** 3-4 días
 
 ### Se construye
+
 - `packages/sdk`: cliente tipado con funciones para cada endpoint
   - **Importa tipos de `@agent/shared`** (Decisión 2B, NO de `@agent/server`)
   - Helpers para consumir SSE desde el cliente **con tracking de sequence numbers**
@@ -76,6 +84,7 @@ Cada fase termina con algo **funcionando y demostrable**. No se avanza a la sigu
 - Ejecutar `scripts/test-ansi.ts` en Windows Terminal, PowerShell 7, cmd.exe
 
 ### Demostrable al final
+
 - `pnpm dev` arranca server + TUI simultáneamente
 - La TUI muestra header con "Modo: plan | Modelo: ninguno"
 - Tab navega entre las tres pestañas
@@ -85,9 +94,11 @@ Cada fase termina con algo **funcionando y demostrable**. No se avanza a la sigu
 ---
 
 ## Fase 3 — Tools del agente + loop ReAct
+
 **Duración estimada:** 5-7 días
 
 ### Se construye
+
 - **`lib/shell.ts`** con `detectShell()` — detección `pwsh` → `powershell` → `cmd` (Decisión 3D)
 - 6 tools implementados y testeados unitariamente:
   - `read_file(path)` — lee contenido, trunca si >100KB
@@ -118,6 +129,7 @@ Cada fase termina con algo **funcionando y demostrable**. No se avanza a la sigu
 - Persistencia: cada mensaje (un registro por pieza, Decisión 7A) se guarda en SQLite
 
 ### Demostrable al final
+
 - Script: crear sesión → enviar "lee el archivo X" → el agente usa `read_file` → retorna contenido
 - Script: enviar "crea un archivo hello.txt" en modo plan → pide confirmación
 - Script: en modo build → ejecuta con delay de 500ms, sin pedir permiso
@@ -128,9 +140,11 @@ Cada fase termina con algo **funcionando y demostrable**. No se avanza a la sigu
 ---
 
 ## Fase 4 — Endpoints de chat/sesiones + TUI Chat + Sesiones
+
 **Duración estimada:** 5-6 días
 
 ### Se construye
+
 - Endpoints de server:
   - `POST /api/sessions` → nueva sesión
   - `GET /api/sessions` → listar
@@ -157,6 +171,7 @@ Cada fase termina con algo **funcionando y demostrable**. No se avanza a la sigu
 - **Benchmark**: `scripts/test-ink-perf.ts` con 100+ mensajes (mitigación Riesgo 6)
 
 ### Demostrable al final
+
 - Flujo completo end-to-end:
   1. Abrir TUI, seleccionar modelo en pantalla Modelos
   2. Ir a Chat, escribir "lista los archivos en el directorio actual"
@@ -170,9 +185,11 @@ Cada fase termina con algo **funcionando y demostrable**. No se avanza a la sigu
 ---
 
 ## Fase 5 — Pulido, edge cases y validación
+
 **Duración estimada:** 3-4 días
 
 ### Se construye
+
 - Manejo robusto de errores en toda la cadena:
   - Ollama no disponible → mensaje claro en TUI
   - Modelo no descargado → redirect a pantalla Modelos
@@ -187,6 +204,7 @@ Cada fase termina con algo **funcionando y demostrable**. No se avanza a la sigu
 - **Opcional post-MVP:** binarios Go en `cmd/` (ignorados en MVP, inconsistencia #1)
 
 ### Demostrable al final
+
 - MVP completo funcional
 - Manejo graceful de todos los errores comunes
 - Funciona en Windows y Linux
@@ -197,13 +215,13 @@ Cada fase termina con algo **funcionando y demostrable**. No se avanza a la sigu
 
 ## Resumen de timeline
 
-| Fase | Días estimados | Acumulado |
-|------|---------------|-----------|
-| 0 — Scaffold + Shared | 1 | 1 |
-| 1 — Server + DB + Vercel AI SDK | 3-4 | 4-5 |
-| 2 — SDK + TUI + Modelos (Zustand) | 3-4 | 7-9 |
-| 3 — Tools (detectShell) + Loop ReAct (híbrido) | 5-7 | 12-16 |
-| 4 — Chat + Sesiones (throttle, resync) | 5-6 | 17-22 |
-| 5 — Pulido + Validación | 3-4 | 20-26 |
+| Fase                                           | Días estimados | Acumulado |
+| ---------------------------------------------- | -------------- | --------- |
+| 0 — Scaffold + Shared                          | 1              | 1         |
+| 1 — Server + DB + Vercel AI SDK                | 3-4            | 4-5       |
+| 2 — SDK + TUI + Modelos (Zustand)              | 3-4            | 7-9       |
+| 3 — Tools (detectShell) + Loop ReAct (híbrido) | 5-7            | 12-16     |
+| 4 — Chat + Sesiones (throttle, resync)         | 5-6            | 17-22     |
+| 5 — Pulido + Validación                        | 3-4            | 20-26     |
 
 **Total estimado: 20-26 días de desarrollo** para un desarrollador full-time.

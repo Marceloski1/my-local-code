@@ -5,11 +5,14 @@ Partes del proyecto con mayor probabilidad de dar problemas, ordenadas por sever
 ---
 
 ## Riesgo 1: Calidad del tool calling con modelos locales pequeños
+
 **Probabilidad:** Alta  
 **Impacto:** Crítico (el agente no funciona si el LLM no sigue instrucciones)
 
 ### Descripción
+
 Los modelos de 7B-13B parámetros (los que la mayoría de usuarios puede correr localmente) tienen capacidad limitada para seguir instrucciones complejas de formato. El modelo puede:
+
 - Ignorar las instrucciones de tool calling por completo
 - Generar JSON malformado dentro del tag `<tool_call>`
 - Inventar tools que no existen
@@ -17,6 +20,7 @@ Los modelos de 7B-13B parámetros (los que la mayoría de usuarios puede correr 
 - Entrar en loops infinitos repitiendo la misma tool call
 
 ### Mitigación
+
 1. **Enfoque híbrido (Decisión 1C) con Vercel AI SDK:** La ruta nativa del SDK (`streamText({ tools })`) se intenta primero. Si el modelo no soporta tools o falla consistentemente, fallback a prompting textual con regex + Zod
 2. **Validación Zod estricta:** Todo tool call parseado (nativo o textual) se valida contra el schema. Si falla, se trata como respuesta de texto
 3. **Guard contra loops:** Máximo de iteraciones (default 25) y detección de repetición (si la misma tool call se repite 3 veces consecutivas, parar)
@@ -26,6 +30,7 @@ Los modelos de 7B-13B parámetros (los que la mayoría de usuarios puede correr 
 ### Plan de mitigación ejecutable
 
 #### Fase de validación (durante Fase 3 del desarrollo)
+
 1. **Crear script `scripts/test-models.ts`** que:
    - Conecta a Ollama, enumera modelos instalados
    - Ejecuta 5 escenarios predefinidos con cada modelo:
@@ -54,17 +59,21 @@ Los modelos de 7B-13B parámetros (los que la mayoría de usuarios puede correr 
 ---
 
 ## Riesgo 2: Compatibilidad de Ink/React en Windows Terminal
+
 **Probabilidad:** Media-Alta  
 **Impacto:** Alto (la TUI no se renderiza correctamente)
 
 ### Descripción
+
 Ink usa ANSI escape codes para renderizar la UI. Windows tiene históricamente mal soporte de ANSI:
+
 - `cmd.exe` no soporta ANSI por defecto (requiere habilitar VT processing vía API Win32)
 - Windows Terminal lo soporta, pero hay edge cases con colores, cursor positioning y limpieza de pantalla
 - PowerShell ISE no soporta ANSI en absoluto
 - Ink asume un terminal con soporte completo de ANSI y puede renderizar basura si falta
 
 ### Mitigación
+
 1. **Activar VT processing explícitamente** al iniciar la TUI en Windows. Usar el módulo `supports-color` para detectar y forzar si es necesario
 2. **Probar en los 3 terminales principales de Windows:** Windows Terminal, cmd.exe con VT, PowerShell 7
 3. **Documentar requisitos:** "Requiere Windows Terminal o terminal con soporte ANSI"
@@ -74,6 +83,7 @@ Ink usa ANSI escape codes para renderizar la UI. Windows tiene históricamente m
 ### Plan de mitigación ejecutable
 
 #### Checklist de compatibilidad (ejecutar en Fase 2)
+
 1. **Crear `scripts/test-ansi.ts`** que:
    - Detecta el terminal actual (`process.env.TERM`, `process.env.WT_SESSION`, `process.env.ConEmuPID`)
    - Imprime secuencias ANSI de test: colores 256, true color, cursor movement, clear screen
@@ -84,13 +94,13 @@ Ink usa ANSI escape codes para renderizar la UI. Windows tiene históricamente m
 
 3. **Matriz de tests manuales:**
 
-| Terminal | Colores | Cursor | Clear | Scroll | Resultado |
-|----------|---------|--------|-------|--------|-----------|
-| Windows Terminal | ✅ | ✅ | ✅ | ✅ | Esperado: OK |
-| cmd.exe (VT) | ⚠️ | ⚠️ | ⚠️ | ⚠️ | Probar |
-| PowerShell 7 | ✅ | ✅ | ✅ | ✅ | Esperado: OK |
-| PowerShell 5.1 | ⚠️ | ⚠️ | ⚠️ | ⚠️ | Probar |
-| VS Code Terminal | ✅ | ✅ | ✅ | ✅ | Esperado: OK |
+| Terminal         | Colores | Cursor | Clear | Scroll | Resultado    |
+| ---------------- | ------- | ------ | ----- | ------ | ------------ |
+| Windows Terminal | ✅      | ✅     | ✅    | ✅     | Esperado: OK |
+| cmd.exe (VT)     | ⚠️      | ⚠️     | ⚠️    | ⚠️     | Probar       |
+| PowerShell 7     | ✅      | ✅     | ✅    | ✅     | Esperado: OK |
+| PowerShell 5.1   | ⚠️      | ⚠️     | ⚠️    | ⚠️     | Probar       |
+| VS Code Terminal | ✅      | ✅     | ✅    | ✅     | Esperado: OK |
 
 4. **Mensaje de arranque:** Al iniciar la TUI, verificar soporte ANSI. Si no hay soporte:
    ```
@@ -102,11 +112,14 @@ Ink usa ANSI escape codes para renderizar la UI. Windows tiene históricamente m
 ---
 
 ## Riesgo 3: `child_process` en Windows para el tool `bash`
+
 **Probabilidad:** Media-Alta  
 **Impacto:** Alto (tools del agente fallan)
 
 ### Descripción
+
 `child_process.exec/spawn` se comporta diferente en Windows:
+
 - Los paths usan `\` en vez de `/`
 - Los comandos Unix comunes no existen (`cat`, `grep`, `ls` como binarios)
 - Las variables de entorno se acceden con `%VAR%` en cmd y `$env:VAR` en PowerShell
@@ -115,6 +128,7 @@ Ink usa ANSI escape codes para renderizar la UI. Windows tiene históricamente m
 - El shell por defecto de Node en Windows es `cmd.exe`, no `bash`
 
 ### Mitigación
+
 1. **Usar `cross-spawn`** (o la opción `shell: true` de `spawn` con detección de shell)
 2. **Normalizar paths** con `path.normalize()` y `path.resolve()` siempre antes de pasarlos a tools
 3. **En el system prompt del agente**, incluir instrucción explícita: "El OS es [detectado]. Usa comandos compatibles con [shell detectada]"
@@ -125,6 +139,7 @@ Ink usa ANSI escape codes para renderizar la UI. Windows tiene históricamente m
 ### Plan de mitigación ejecutable
 
 #### Implementación (durante Fase 3)
+
 1. **Crear `packages/server/src/lib/shell.ts`** con:
    - `detectShell()`: detecta `pwsh` → `powershell` → `cmd` en Windows; `bash` → `sh` en Linux (Decisión 3D)
    - `executeCommand(cmd, options)`: wrapper sobre `child_process.spawn` con:
@@ -155,16 +170,20 @@ Ink usa ANSI escape codes para renderizar la UI. Windows tiene históricamente m
 ---
 
 ## Riesgo 4: Compactación de contexto pierde información crítica
+
 **Probabilidad:** Media  
 **Impacto:** Alto (el agente "olvida" lo que hizo y repite acciones o contradice sus resultados previos)
 
 ### Descripción
+
 Cuando el historial se acerca al 75% del context length, se usa el LLM para resumir los mensajes antiguos. Pero el resumen puede:
+
 - Perder detalles de archivos modificados (paths, contenido exacto)
 - Olvidar errores previos que son relevantes para la tarea actual
 - Comprimir tool results que el agente necesita recordar
 
 ### Mitigación
+
 1. **Preservar reciente:** Los últimos N mensajes (ej: 10) NUNCA se compactan, se preservan intactos
 2. **Prompt de compactación especializado:** No usar un "resume esto" genérico. El prompt debe decir: "Resume la conversación preservando: archivos modificados y sus paths, errores encontrados, decisiones tomadas, tools usados y sus resultados clave"
 3. **Metadata explícita:** Además del resumen, guardar una lista estructurada de: archivos tocados, comandos ejecutados, errores encontrados. Esta metadata NO se compacta
@@ -174,7 +193,9 @@ Cuando el historial se acerca al 75% del context length, se usa el LLM para resu
 ### Plan de mitigación ejecutable
 
 #### Diseño de metadata no compactable (durante Fase 3)
+
 1. **Schema de metadata por sesión** en SQLite (tabla `session_metadata`):
+
    ```sql
    CREATE TABLE session_metadata (
      id INTEGER PRIMARY KEY,
@@ -187,6 +208,7 @@ Cuando el historial se acerca al 75% del context length, se usa el LLM para resu
    ```
 
 2. **Prompt de compactación específico:**
+
    ```
    Resume la siguiente conversación entre usuario y asistente.
    Tu resumen DEBE preservar:
@@ -212,16 +234,20 @@ Cuando el historial se acerca al 75% del context length, se usa el LLM para resu
 ---
 
 ## Riesgo 5: SSE reconexión y estado inconsistente
+
 **Probabilidad:** Media  
 **Impacto:** Medio (la TUI se queda colgada o pierde datos)
 
 ### Descripción
+
 Si la conexión SSE se corta mid-streaming:
+
 - La TUI tiene una respuesta parcial sin saber si terminó
 - El server puede haber ejecutado tool calls cuyos resultados la TUI no recibió
 - Si la TUI reconecta, ¿desde qué punto retoma?
 
 ### Mitigación
+
 1. **No reconectar automáticamente el stream de chat.** Si se corta, mostrar mensaje de error y que el usuario reenvíe manualmente
 2. **La TUI recarga el historial completo vía `GET /api/sessions/:id`** después de una desconexión, así sincroniza con lo que el server persistió
 3. **Cada evento SSE tiene un `sequence` number.** La TUI puede detectar si le faltaron eventos
@@ -230,6 +256,7 @@ Si la conexión SSE se corta mid-streaming:
 ### Plan de mitigación ejecutable
 
 1. **Implementar `sequence` en eventos SSE** en `packages/shared/types/sse-events.ts`:
+
    ```typescript
    interface SSEEvent {
      sequence: number;
@@ -250,13 +277,16 @@ Si la conexión SSE se corta mid-streaming:
 ---
 
 ## Riesgo 6: Performance de Ink con mensajes largos
+
 **Probabilidad:** Media  
 **Impacto:** Medio (la TUI se pone lenta)
 
 ### Descripción
+
 Ink re-renderiza todo el árbol de React en cada actualización. Si hay muchos mensajes en el chat (decenas de mensajes con contenido largo), el re-render puede ser lento y generar flickering.
 
 ### Mitigación
+
 1. **Virtualización:** Solo renderizar los últimos N mensajes visibles (ej: 50). Los anteriores se omiten del render pero están disponibles en el estado
 2. **`React.memo` agresivo:** Los mensajes ya terminados no cambian, memorizarlos
 3. **Throttle en streaming:** Agrupar tokens y actualizar el render cada ~50ms en vez de por cada token individual
@@ -280,16 +310,20 @@ Ink re-renderiza todo el árbol de React en cada actualización. Si hay muchos m
 ---
 
 ## Riesgo 7: Ollama OOM con modelos grandes
+
 **Probabilidad:** Media  
 **Impacto:** Medio (la sesión muere sin mensaje claro)
 
 ### Descripción
+
 Si el usuario selecciona un modelo que no cabe en su RAM/VRAM, Ollama puede:
+
 - Crashear silenciosamente
 - Retornar errores crípticos
 - Funcionar pero extremadamente lento (swapping a disco)
 
 ### Mitigación
+
 1. **Mostrar info del modelo** (tamaño, parámetros) en la pantalla de Modelos para que el usuario elija conscientemente
 2. **Detectar Ollama crash:** Si la conexión al modelo falla después de responder anteriormente, mostrar "Ollama no responde. Posible out of memory. Considera usar un modelo más pequeño"
 3. **Timeout generoso pero finito:** 120s sin token = error. No dejar esperando indefinidamente
@@ -314,38 +348,43 @@ Si el usuario selecciona un modelo que no cabe en su RAM/VRAM, Ollama puede:
 
 ## Matriz resumen
 
-| # | Riesgo | Prob. | Impacto | Criticidad | Mitigación clave |
-|---|--------|-------|---------|------------|-----------------|
-| 1 | Tool calling con modelos ≤13B | Alta | Crítico | 🔴 | Híbrido nativo+textual via Vercel AI SDK |
-| 2 | Ink/ANSI en Windows | Media-Alta | Alto | 🔴 | `supports-color` + detección + fallback |
-| 3 | child_process en Windows | Media-Alta | Alto | 🔴 | `cross-spawn` + `detectShell()` + UTF-8 |
-| 4 | Compactación pierde info | Media | Alto | 🟡 | Metadata no compactable + prompt específico |
-| 5 | SSE reconexión | Media | Medio | 🟡 | Persist-before-emit + sequence + resync |
-| 6 | Performance de Ink | Media | Medio | 🟡 | Throttle 50ms + React.memo + benchmark |
-| 7 | Ollama OOM | Media | Medio | 🟡 | Info de modelo + health check + timeout |
+| #   | Riesgo                        | Prob.      | Impacto | Criticidad | Mitigación clave                            |
+| --- | ----------------------------- | ---------- | ------- | ---------- | ------------------------------------------- |
+| 1   | Tool calling con modelos ≤13B | Alta       | Crítico | 🔴         | Híbrido nativo+textual via Vercel AI SDK    |
+| 2   | Ink/ANSI en Windows           | Media-Alta | Alto    | 🔴         | `supports-color` + detección + fallback     |
+| 3   | child_process en Windows      | Media-Alta | Alto    | 🔴         | `cross-spawn` + `detectShell()` + UTF-8     |
+| 4   | Compactación pierde info      | Media      | Alto    | 🟡         | Metadata no compactable + prompt específico |
+| 5   | SSE reconexión                | Media      | Medio   | 🟡         | Persist-before-emit + sequence + resync     |
+| 6   | Performance de Ink            | Media      | Medio   | 🟡         | Throttle 50ms + React.memo + benchmark      |
+| 7   | Ollama OOM                    | Media      | Medio   | 🟡         | Info de modelo + health check + timeout     |
 
 ---
 
 ## Inconsistencias y gaps detectados — RESUELTOS
 
 ### 1. `cmd/` Go binaries vs Node implementation ✅ RESUELTO
+
 El spec dice que `search_files` "puede opcionalmente delegar al binario Go". Pero también dice que `cmd/` es solo para file watching y búsqueda. **Gap:** no está definido el protocolo de comunicación entre el server Node y los binarios Go.
 
 **Resolución:** Ignorar `cmd/` por completo en el MVP. Las 6 tools se implementan en Node puro. Los binarios Go son una optimización post-MVP (Fase 5 opcional). Si se implementan, la comunicación será via stdin/stdout con JSON line-delimited.
 
 ### 2. Falta definición de `list_files` depth default ✅ RESUELTO
+
 El spec dice "profundidad configurable" pero no especifica el default.
 
 **Resolución:**
+
 - Default: **3 niveles** de profundidad
 - Máximo permitido: **10 niveles**
 - Exclusiones automáticas: `node_modules`, `.git`, `dist`, `build`, `__pycache__`, `.next`, `.venv`
 - El LLM puede especificar `maxDepth` en el tool call si necesita más
 
 ### 3. Falta política de rate limiting del agente ✅ RESUELTO
+
 Si el LLM entra en un loop haciendo tool calls rápidas (ej: 25 `bash` commands en 30 segundos), puede causar daño antes de que el usuario reaccione.
 
 **Resolución:**
+
 - **Modo plan:** cada tool destructivo requiere confirmación → rate limiting implícito
 - **Modo build:** agregar delay mínimo de **500ms** entre tool calls destructivos (`write_file`, `edit_file`, `bash`)
 - **Detección de repetición:** si el mismo tool call (mismo nombre + mismos args) se repite 3 veces consecutivas, parar el loop con error "Posible loop detectado"

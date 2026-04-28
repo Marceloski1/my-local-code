@@ -213,23 +213,23 @@ Checklist verificable. Cada ítem es una condición binaria: pasa o no pasa. El 
 
 ## Resumen numérico
 
-| Categoría | Criterios |
-|-----------|-----------|
-| Infraestructura | 6 |
-| Shared (contratos) | 3 |
-| Server — Health/Config | 5 |
-| Server — Modelos | 6 |
-| Server — Sesiones | 5 |
-| Server — Agente | 18 |
-| Server — Compactación | 6 |
-| Server — Tools | 13 |
-| Server — Proveedor AI | 6 |
-| SDK | 8 |
-| TUI — Layout | 9 |
-| TUI — Modelos | 8 |
-| TUI — Chat | 9 |
-| TUI — Sesiones | 4 |
-| Cross-platform | 6 |
-| Errores/edge | 7 |
-| Validación de modelos | 3 |
-| **Total** | **122** |
+| Categoría              | Criterios |
+| ---------------------- | --------- |
+| Infraestructura        | 6         |
+| Shared (contratos)     | 3         |
+| Server — Health/Config | 5         |
+| Server — Modelos       | 6         |
+| Server — Sesiones      | 5         |
+| Server — Agente        | 18        |
+| Server — Compactación  | 6         |
+| Server — Tools         | 13        |
+| Server — Proveedor AI  | 6         |
+| SDK                    | 8         |
+| TUI — Layout           | 9         |
+| TUI — Modelos          | 8         |
+| TUI — Chat             | 9         |
+| TUI — Sesiones         | 4         |
+| Cross-platform         | 6         |
+| Errores/edge           | 7         |
+| Validación de modelos  | 3         |
+| **Total**              | **122**   |

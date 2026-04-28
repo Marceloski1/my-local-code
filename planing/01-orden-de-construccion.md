@@ -21,6 +21,7 @@ Construir primero lo que no tiene dependencias, luego lo que depende de eso. Cad
 ### 2. `packages/shared` — contratos compartidos + `packages/server` — esqueleto HTTP + DB
 
 **Qué:**
+
 - **`packages/shared`:** Zod schemas para requests/responses, tipos TypeScript para mensajes, sesiones, tools, eventos SSE, constantes (roles, modos, defaults). Dependencia: solo `zod`. (Decisión 2B)
 - **`packages/server`:** Hono server escuchando en `:4096`, health endpoint, Drizzle ORM + better-sqlite3 con el schema inicial (tablas `sessions`, `messages`, `config`, `session_metadata`), migraciones.
 
@@ -41,6 +42,7 @@ Construir primero lo que no tiene dependencias, luego lo que depende de eso. Cad
 **Dependencia:** `ai` y `@ai-sdk/openai` (npm packages). `@agent/shared` para tipos.
 
 **Validación:** Script de test manual que:
+
 1. Crea el proveedor: `createAIProvider({ type: 'ollama', baseURL: 'http://localhost:11434/v1' })`
 2. Lista modelos via `ollama-management.ts`
 3. Hace una llamada con `generateText({ model: provider('tinyllama'), prompt: 'Hello' })`
@@ -63,6 +65,7 @@ Construir primero lo que no tiene dependencias, luego lo que depende de eso. Cad
 ### 5. `packages/server` — endpoints de modelos
 
 **Qué:** Rutas REST + SSE:
+
 - `GET /api/models` → lista modelos descargados (via `ollama-management.ts`)
 - `POST /api/models/pull` → inicia descarga, retorna SSE con progreso
 - `POST /api/models/active` → guarda modelo activo en config (SQLite)
@@ -131,6 +134,7 @@ Construir primero lo que no tiene dependencias, luego lo que depende de eso. Cad
 **Dependencia:** Pasos 2, 3, 9.
 
 **Validación:**
+
 - Script que inicia una sesión, envía "lista los archivos en /tmp", el agente usa `list_files`, y retorna el resultado formateado
 - Probar con modo plan: el agente debería pedir confirmación para `bash`
 - Probar fallback textual: configurar `toolMode: 'textual'` y verificar que funciona
@@ -141,6 +145,7 @@ Construir primero lo que no tiene dependencias, luego lo que depende de eso. Cad
 ### 11. `packages/server` — endpoints de chat/sesiones
 
 **Qué:**
+
 - `POST /api/sessions` → crear sesión
 - `GET /api/sessions` → listar sesiones
 - `GET /api/sessions/:id` → detalle con mensajes

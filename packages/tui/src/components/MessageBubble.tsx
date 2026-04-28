@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { Box, Text } from 'ink';
 import { INK_COLORS } from '../theme/colors.js';
+import { MarkdownRenderer } from './MarkdownRenderer.js';
 
 interface MessageBubbleProps {
   role: 'user' | 'assistant';
@@ -14,17 +15,19 @@ export const MessageBubble = memo(function MessageBubble({ role, content }: Mess
         <Text bold color={INK_COLORS.secondary}>
           Tú:{' '}
         </Text>
-        <Text>{content}</Text>
+        <Text wrap="wrap">{content}</Text>
       </Box>
     );
   }
 
   return (
-    <Box>
+    <Box flexDirection="column">
       <Text bold color={INK_COLORS.success}>
-        Agente:{' '}
+        Agente:
       </Text>
-      <Text>{content}</Text>
+      <Box paddingLeft={2}>
+        <MarkdownRenderer content={content} />
+      </Box>
     </Box>
   );
 });
